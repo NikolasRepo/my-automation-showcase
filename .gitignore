@@ -1,0 +1,48 @@
+# Environment variables — never commit credentials
+.env
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Node modules
+node_modules/
+
+# Frontend build output
+frontend/dist/
+
+# Docker volumes and data
+postgres_data/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VS Code settings
+.vscode/
+
+# Logs
+*.log
+
+# Excel data files — contain operational data
+*.xlsx
+*.xls
+
+# Debug scripts — not needed in repo
+scripts/check_db.py
+scripts/verify_password.py
+scripts/reset_admin_password.py
+
+# Temporary files copied into backend container
+backend/seed_db.py
+backend/import_from_excel.py
+backend/import_tool.py
+backend/checks_summary.xlsx
