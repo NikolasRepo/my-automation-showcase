@@ -1,9 +1,6 @@
 """
 Run this once after the database is created to seed initial data.
-Usage: python scripts/seed_db.py
 
-IMPORTANT: Replace all placeholder values below with your real
-production lines, stations, checklist items, and staff before running.
 """
 import asyncio
 import sys
@@ -18,15 +15,13 @@ from app.core.security import hash_password
 
 # =============================================================================
 # PRODUCTION LINES, STATIONS, AND CHECKLIST ITEMS
-# Replace the placeholder names and checklist items with your real data.
-# Add or remove lines, stations, and items as needed.
 #
 # data_type options:
-#   DataType.pass_fail  — operator selects Pass or Fail
-#   DataType.ok_ng      — operator selects OK or NG
-#   DataType.numeric    — operator enters a number, min/max trigger alerts
+#   DataType.pass_fail
+#   DataType.ok_ng
+#   DataType.numeric
 #
-# display_order controls the sequence items appear on the form (lower = first).
+# display_order controls the sequence items appear on the form
 # supervisor_email is optional — used for alert notifications when configured.
 # =============================================================================
 
@@ -53,7 +48,7 @@ PRODUCTION_LINES = [
                     {
                         "name": "Emergency stop functional",
                         "category": None,
-                        "data_type": DataType.pass_fail,
+                        "data_type": DataType.ok_ng,
                         "unit": None,
                         "min_value": None,
                         "max_value": None,
@@ -102,7 +97,6 @@ PRODUCTION_LINES = [
 
 # =============================================================================
 # STAFF ACCOUNTS
-# Add your leaders, admins, and operators below.
 # Leaders and admins require a username and password.
 # Operators require only a full name.
 # =============================================================================
@@ -133,7 +127,7 @@ ADMINS = [
         "full_name": "System Admin",
         "username": "admin",
         "email": None,
-        "password": "admin",
+        "password": "StrongPassword123",
     },
 ]
 

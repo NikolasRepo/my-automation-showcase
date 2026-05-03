@@ -15,9 +15,7 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 async def list_alerts(
     unacknowledged_only: bool = False,
     db: AsyncSession = Depends(get_db),
-    
-    #Commented out for dev, remove for live
-    #_: User = Depends(require_role(UserRole.leader, UserRole.admin)),
+    _: User = Depends(require_role(UserRole.leader, UserRole.admin)),
 ):
     query = select(Alert).order_by(Alert.created_at.desc())
     if unacknowledged_only:
@@ -30,9 +28,7 @@ async def list_alerts(
 async def acknowledge_alert(
     alert_id: str,
     db: AsyncSession = Depends(get_db),
-
-    #Commented out for dev, remove for live
-    #current_user: User = Depends(require_role(UserRole.leader, UserRole.admin)),
+    current_user: User = Depends(require_role(UserRole.leader, UserRole.admin)),
 ):
     result = await db.execute(select(Alert).where(Alert.id == alert_id))
     alert = result.scalar_one_or_none()

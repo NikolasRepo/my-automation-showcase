@@ -107,14 +107,13 @@ async def submit_inspection(
 
     await db.flush()
 
-    # TODO: Re-enable before go-live
-    # for alert in alerts_created:
-    #     send_alert_notification(
-    #         alert_message=alert.message,
-    #         inspection_id=str(inspection.id),
-    #         line_name=line_name,
-    #         to=supervisor_email,
-    #     )
+    for alert in alerts_created:
+        send_alert_notification(
+            alert_message=alert.message,
+            inspection_id=str(inspection.id),
+            line_name=line_name,
+            to=supervisor_email,
+        )
 
     refreshed = await db.execute(
         select(Inspection)

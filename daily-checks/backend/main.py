@@ -2,8 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
-# TODO: Re-enable before go-live
-# from app.core.scheduler import start_scheduler, stop_scheduler
+from app.core.scheduler import start_scheduler, stop_scheduler
 from app.api import auth, inspections, alerts, reports, admin
 
 settings = get_settings()
@@ -11,10 +10,9 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # TODO: Re-enable before go-live
-    # start_scheduler()
+    start_scheduler()
     yield
-    # stop_scheduler()
+    stop_scheduler()
 
 
 app = FastAPI(
