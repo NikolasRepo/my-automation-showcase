@@ -48,7 +48,7 @@ PRODUCTION_LINES = [
                     {
                         "name": "Emergency stop functional",
                         "category": None,
-                        "data_type": DataType.ok_ng,
+                        "data_type": DataType.pass_fail,
                         "unit": None,
                         "min_value": None,
                         "max_value": None,

@@ -23,7 +23,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
         <div className="flex items-center gap-8">
           <span className="font-semibold text-brand-700 tracking-tight text-base">
-            &#9642; SEWS
+            &#9642; Place Holder
           </span>
           <div className="hidden sm:flex items-center gap-1">
             {visibleLinks.map(link => (
