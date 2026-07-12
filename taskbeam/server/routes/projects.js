@@ -68,12 +68,12 @@ router.get('/:id', async (req, res) => {
 
 // Create project
 router.post('/', async (req, res) => {
-  const { name, client_name, budget } = req.body
+  const { name, client_name, budget, unit_system } = req.body
   if (!name) return res.status(400).json({ error: 'Project name is required' })
   try {
     const result = await pool.query(
-      'INSERT INTO projects (name, client_name, budget) VALUES ($1, $2, $3) RETURNING *',
-      [name, client_name || null, budget || null]
+      'INSERT INTO projects (name, client_name, budget, unit_system) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, client_name || null, budget || null, unit_system || 'imperial']
     )
     res.status(201).json(result.rows[0])
   } catch (err) {
@@ -82,13 +82,13 @@ router.post('/', async (req, res) => {
   }
 })
 
-// Update project
+//Update project
 router.put('/:id', async (req, res) => {
-  const { name, client_name, budget } = req.body
+  const { name, client_name, budget, unit_system } = req.body
   try {
     const result = await pool.query(
-      'UPDATE projects SET name = $1, client_name = $2, budget = $3 WHERE id = $4 RETURNING *',
-      [name, client_name || null, budget || null, req.params.id]
+      'UPDATE projects SET name = $1, client_name = $2, budget = $3, unit_system = $4 WHERE id = $5 RETURNING *',
+      [name, client_name || null, budget || null, unit_system || 'imperial', req.params.id]
     )
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Project not found' })

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import styles from './Rooms.module.css'
+import { convertLength, convertArea, lengthUnit, areaUnit } from '../utils/units'
 
 const WASTE_FACTORS = {
   floor: 1.10,
@@ -32,7 +33,7 @@ const emptyRoom = {
   status: 'planned',
 }
 
-export default function Rooms({ rooms, onCreateRoom, onUpdateRoom, onDeleteRoom }) {
+export default function Rooms({ rooms, onCreateRoom, onUpdateRoom, onDeleteRoom, unitSystem }) {
   const [form, setForm] = useState(emptyRoom)
   const [editId, setEditId] = useState(null)
   const [showForm, setShowForm] = useState(false)
@@ -94,7 +95,9 @@ export default function Rooms({ rooms, onCreateRoom, onUpdateRoom, onDeleteRoom 
       <div className={styles.topbar}>
         <div>
           <h1 className={styles.title}>Rooms & layout</h1>
-          <span className={styles.sub}>{rooms.length} rooms · {totalArea.toFixed(0)} sq ft total</span>
+          <span className={styles.sub}>
+            {rooms.length} rooms · {convertArea(totalArea, unitSystem).toFixed(0)} {areaUnit(unitSystem)} total
+          </span>
         </div>
         <button className={styles.btnPrimary} onClick={() => setShowForm(true)}>
           + Add room
@@ -107,7 +110,14 @@ export default function Rooms({ rooms, onCreateRoom, onUpdateRoom, onDeleteRoom 
           <div className={styles.formGrid}>
             <div className={styles.formGroup}>
               <label className={styles.label}>Room name</label>
-              <input className={styles.input} name="name" value={form.name} onChange={handleChange} placeholder="e.g. Kitchen" autoFocus />
+              <input
+                className={styles.input}
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="e.g. Kitchen"
+                autoFocus
+              />
             </div>
             <div className={styles.formGroup}>
               <label className={styles.label}>Status</label>
@@ -118,16 +128,37 @@ export default function Rooms({ rooms, onCreateRoom, onUpdateRoom, onDeleteRoom 
               </select>
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Length (ft)</label>
-              <input className={styles.input} name="length" type="number" value={form.length} onChange={handleChange} placeholder="0" />
+              <label className={styles.label}>Length ({lengthUnit(unitSystem)})</label>
+              <input
+                className={styles.input}
+                name="length"
+                type="number"
+                value={form.length}
+                onChange={handleChange}
+                placeholder="0"
+              />
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Width (ft)</label>
-              <input className={styles.input} name="width" type="number" value={form.width} onChange={handleChange} placeholder="0" />
+              <label className={styles.label}>Width ({lengthUnit(unitSystem)})</label>
+              <input
+                className={styles.input}
+                name="width"
+                type="number"
+                value={form.width}
+                onChange={handleChange}
+                placeholder="0"
+              />
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Ceiling height (ft)</label>
-              <input className={styles.input} name="height" type="number" value={form.height} onChange={handleChange} placeholder="0" />
+              <label className={styles.label}>Ceiling height ({lengthUnit(unitSystem)})</label>
+              <input
+                className={styles.input}
+                name="height"
+                type="number"
+                value={form.height}
+                onChange={handleChange}
+                placeholder="0"
+              />
             </div>
           </div>
           <div className={styles.formActions}>
@@ -164,11 +195,13 @@ export default function Rooms({ rooms, onCreateRoom, onUpdateRoom, onDeleteRoom 
                 return (
                   <tr key={room.id}>
                     <td><strong>{room.name}</strong></td>
-                    <td>{room.length} × {room.width} × {room.height} ft</td>
-                    <td><strong>{calcArea(room.length, room.width)} sq ft</strong></td>
-                    <td>{m.floorArea} sq ft</td>
-                    <td>{m.wallArea} sq ft</td>
-                    <td>{m.perimeter} ft</td>
+                    <td>
+                      {convertLength(room.length, unitSystem)} × {convertLength(room.width, unitSystem)} × {convertLength(room.height, unitSystem)} {lengthUnit(unitSystem)}
+                    </td>
+                    <td><strong>{convertArea(calcArea(room.length, room.width), unitSystem)} {areaUnit(unitSystem)}</strong></td>
+                    <td>{convertArea(m.floorArea, unitSystem)} {areaUnit(unitSystem)}</td>
+                    <td>{convertArea(m.wallArea, unitSystem)} {areaUnit(unitSystem)}</td>
+                    <td>{convertLength(m.perimeter, unitSystem)} {lengthUnit(unitSystem)}</td>
                     <td><span className={`${styles.badge} ${styles[room.status]}`}>{room.status}</span></td>
                     <td>
                       <div className={styles.actions}>

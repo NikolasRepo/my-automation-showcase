@@ -19,6 +19,7 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   const activeProject = projects.find(p => p.id === activeProjectId) || null
+  const unitSystem = activeProject?.unit_system || 'imperial'
 
   useEffect(() => {
     async function init() {
@@ -185,6 +186,7 @@ function App() {
               onCreateRoom={handleCreateRoom}
               onUpdateRoom={handleUpdateRoom}
               onDeleteRoom={handleDeleteRoom}
+              unitSystem={unitSystem}
             />}
           />
           <Route path="/materials" element={
@@ -194,10 +196,16 @@ function App() {
               onCreateMaterial={handleCreateMaterial}
               onUpdateMaterial={handleUpdateMaterial}
               onDeleteMaterial={handleDeleteMaterial}
+              unitSystem={unitSystem}
             />}
           />
           <Route path="/estimates" element={
-            <Estimates rooms={rooms} materials={materials} activeProject={activeProject} />}
+            <Estimates
+              rooms={rooms}
+              materials={materials}
+              activeProject={activeProject}
+              unitSystem={unitSystem}
+            />}
           />
           <Route path="/tasks" element={
             <Tasks
@@ -214,6 +222,7 @@ function App() {
               rooms={rooms}
               materials={materials}
               tasks={tasks}
+              unitSystem={unitSystem}
             />}
           />
         </Routes>

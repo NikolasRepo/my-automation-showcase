@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import styles from './Materials.module.css'
+import { convertLength, convertArea, lengthUnit, areaUnit } from '../utils/units'
 
 const APPLICATION_TYPES = [
   { value: 'floor', label: 'Flooring', unit: 'sq ft', dimensionKey: 'floorArea' },
@@ -38,7 +39,7 @@ const emptyMaterial = {
   notes: '',
 }
 
-export default function Materials({ rooms, materials, onCreateMaterial, onUpdateMaterial, onDeleteMaterial }) {
+export default function Materials({ rooms, materials, onCreateMaterial, onUpdateMaterial, onDeleteMaterial, unitSystem }) {
   const [form, setForm] = useState(emptyMaterial)
   const [editId, setEditId] = useState(null)
   const [showForm, setShowForm] = useState(false)
@@ -185,7 +186,10 @@ export default function Materials({ rooms, materials, onCreateMaterial, onUpdate
               <div className={styles.formGroup}>
                 <label className={styles.label}>Auto quantity</label>
                 <div className={styles.autoQty}>
-                  {calcRoomDimensions(selectedRoom)[appType.dimensionKey]} {appType.unit}
+                  {appType.dimensionKey === 'perimeter'
+                    ? `${convertLength(calcRoomDimensions(selectedRoom)[appType.dimensionKey], unitSystem)} ${lengthUnit(unitSystem)}`
+                    : `${convertArea(calcRoomDimensions(selectedRoom)[appType.dimensionKey], unitSystem)} ${areaUnit(unitSystem)}`
+                  }
                   <span className={styles.autoQtyNote}>calculated from room</span>
                 </div>
               </div>

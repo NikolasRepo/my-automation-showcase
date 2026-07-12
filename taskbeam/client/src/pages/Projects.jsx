@@ -5,6 +5,7 @@ const emptyProject = {
   name: '',
   clientName: '',
   budget: '',
+  unitSystem: 'imperial',
 }
 
 export default function Projects({ projects, activeProjectId, setActiveProjectId, onCreateProject, onUpdateProject, onDeleteProject, summaries }) {
@@ -26,6 +27,7 @@ export default function Projects({ projects, activeProjectId, setActiveProjectId
           name: form.name,
           client_name: form.clientName,
           budget: form.budget ? parseFloat(form.budget) : null,
+          unit_system: form.unitSystem,
         })
         setEditId(null)
       } else {
@@ -33,6 +35,7 @@ export default function Projects({ projects, activeProjectId, setActiveProjectId
           name: form.name,
           client_name: form.clientName,
           budget: form.budget ? parseFloat(form.budget) : null,
+          unit_system: form.unitSystem,
         })
       }
       setForm(emptyProject)
@@ -49,6 +52,7 @@ export default function Projects({ projects, activeProjectId, setActiveProjectId
       name: project.name,
       clientName: project.client_name || '',
       budget: project.budget || '',
+      unitSystem: project.unit_system || 'imperial',
     })
     setEditId(project.id)
     setShowForm(true)
@@ -115,6 +119,18 @@ export default function Projects({ projects, activeProjectId, setActiveProjectId
                 onChange={handleChange}
                 placeholder="e.g. 50000"
               />
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Unit system</label>
+              <select
+                className={styles.input}
+                name="unitSystem"
+                value={form.unitSystem}
+                onChange={handleChange}
+              >
+                <option value="imperial">Imperial (ft)</option>
+                <option value="metric">Metric (m)</option>
+              </select>
             </div>
           </div>
           <div className={styles.formActions}>

@@ -1,4 +1,5 @@
 import styles from './ClientView.module.css'
+import { convertLength, convertArea, lengthUnit, areaUnit } from '../utils/units'
 
 const APPLICATION_TYPES = [
   { value: 'floor', label: 'Flooring', unit: 'sq ft', dimensionKey: 'floorArea' },
@@ -43,7 +44,7 @@ function getLineTotal(material, rooms) {
   return parseFloat((qty * cost).toFixed(2))
 }
 
-export default function ClientView({ activeProject, rooms, materials, tasks }) {
+export default function ClientView({ activeProject, rooms, materials, tasks, unitSystem }) {
   if (!activeProject) {
     return (
       <div className={styles.empty}>
@@ -84,7 +85,7 @@ export default function ClientView({ activeProject, rooms, materials, tasks }) {
         </div>
         <div className={styles.summaryCard}>
           <span className={styles.summaryLabel}>Total area</span>
-          <span className={styles.summaryValue}>{totalArea.toFixed(0)} sq ft</span>
+          <span className={styles.summaryValue}>{totalArea.toFixed(0)} {areaUnit(unitSystem)}</span>
         </div>
         <div className={styles.summaryCard}>
           <span className={styles.summaryLabel}>Material line items</span>
@@ -113,8 +114,8 @@ export default function ClientView({ activeProject, rooms, materials, tasks }) {
                 {rooms.map(room => (
                   <tr key={room.id}>
                     <td><strong>{room.name}</strong></td>
-                    <td>{parseFloat(room.length)} × {parseFloat(room.width)} × {parseFloat(room.height)} ft</td>
-                    <td><strong>{(parseFloat(room.length) * parseFloat(room.width)).toFixed(0)} sq ft</strong></td>
+                    <td>{convertLength(room.length, unitSystem)} × {convertLength(room.width, unitSystem)} × {convertLength(room.height, unitSystem)} {lengthUnit(unitSystem)}</td>
+                    <td><strong>{convertArea(parseFloat(room.length) * parseFloat(room.width), unitSystem).toFixed(0)} {areaUnit(unitSystem)}</strong></td>
                     <td><span className={`${styles.badge} ${styles[room.status]}`}>{room.status}</span></td>
                   </tr>
                 ))}
