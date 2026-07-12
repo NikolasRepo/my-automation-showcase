@@ -308,3 +308,66 @@
   color: #1d4ed8;
   font-weight: 500;
 }
+
+.budgetBar {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f0ee;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.budgetInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.budgetLabel {
+  font-size: 10px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.budgetAmount {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.budgetTrack {
+  flex: 1;
+  height: 6px;
+  background: #f0f0ee;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.budgetUnder {
+  background: #16a34a;
+}
+
+.budgetNear {
+  background: #f59e0b;
+}
+
+.budgetOver {
+  background: #dc2626;
+}
+
+.budgetStatusUnder {
+  color: #166534;
+}
+
+.budgetStatusNear {
+  color: #92400e;
+}
+
+.budgetStatusOver {
+  color: #991b1b;
+}

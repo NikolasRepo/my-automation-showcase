@@ -44,7 +44,7 @@ function getLineTotal(material, rooms) {
   return parseFloat((qty * cost).toFixed(2))
 }
 
-export default function Estimates({ rooms, materials }) {
+export default function Estimates({ rooms, materials, activeProject }) {
   const [laborRates, setLaborRates] = useState({})
   const [contingency, setContingency] = useState(10)
 
@@ -120,76 +120,123 @@ export default function Estimates({ rooms, materials }) {
           ))}
         </div>
       </div>
-        {materials.length > 0 && (
-          <div className={styles.roomCard}>
-            <div className={styles.roomHeader}>
-              <div>
-                <span className={styles.roomName}>Materials summary</span>
-                <span className={styles.roomDims}>Consolidated across all rooms</span>
-              </div>
+
+      {activeProject?.budget && (
+        <div className={styles.roomCard}>
+          <div className={styles.roomHeader}>
+            <div>
+              <span className={styles.roomName}>Budget tracker</span>
+              <span className={styles.roomDims}>
+                ${grandTotal.toLocaleString()} of ${parseFloat(activeProject.budget).toLocaleString()} budget used
+              </span>
             </div>
-            <table className={styles.table}>
-              <colgroup>
-                <col />
-                <col />
-                <col />
-                <col />
-                <col />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>Material</th>
-                  <th>Application</th>
-                  <th>Rooms</th>
-                  <th>Total quantity</th>
-                  <th>Total cost</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.values(
-                  materials.reduce((groups, mat) => {
-                    const key = `${mat.name}__${mat.application}`
-                    const qty = getQuantity(mat, rooms)
-                    const total = getLineTotal(mat, rooms)
-                    const room = rooms.find(r => r.id === mat.room_id)
-                    const appT = APPLICATION_TYPES.find(a => a.value === mat.application)
-                    if (!groups[key]) {
-                      groups[key] = {
-                        name: mat.name,
-                        application: mat.application,
-                        appLabel: appT ? appT.label : '—',
-                        unit: appT ? appT.unit : '',
-                        roomNames: [],
-                        totalQty: 0,
-                        totalCost: 0,
-                      }
-                    }
-                    groups[key].totalQty += qty
-                    groups[key].totalCost += total
-                    if (room && !groups[key].roomNames.includes(room.name)) {
-                      groups[key].roomNames.push(room.name)
-                    }
-                    return groups
-                  }, {})
-                ).map((group, i) => (
-                  <tr key={i}>
-                    <td><strong>{group.name}</strong></td>
-                    <td>{group.appLabel}</td>
-                    <td>{group.roomNames.join(', ') || '—'}</td>
-                    <td>{group.totalQty.toFixed(2)} {group.unit}</td>
-                    <td><strong>${group.totalCost.toLocaleString()}</strong></td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colSpan="4" className={styles.totalLabel}>Total materials cost</td>
-                  <td className={styles.totalValue}>${totalMaterials.toLocaleString()}</td>
-                </tr>
-              </tfoot>
-            </table>
+            <span className={`${styles.roomSubtotal} ${
+              grandTotal > parseFloat(activeProject.budget)
+                ? styles.budgetStatusOver
+                : grandTotal > parseFloat(activeProject.budget) * 0.9
+                ? styles.budgetStatusNear
+                : styles.budgetStatusUnder
+            }`}>
+              {grandTotal > parseFloat(activeProject.budget)
+                ? `$${(grandTotal - parseFloat(activeProject.budget)).toLocaleString(undefined, {maximumFractionDigits: 0})} over`
+                : `$${(parseFloat(activeProject.budget) - grandTotal).toLocaleString(undefined, {maximumFractionDigits: 0})} remaining`
+              }
+            </span>
           </div>
-        )}
+          <div className={styles.budgetBarWrap}>
+            <div className={styles.budgetTrack}>
+              <div
+                className={`${styles.budgetFill} ${
+                  grandTotal > parseFloat(activeProject.budget)
+                    ? styles.budgetOver
+                    : grandTotal > parseFloat(activeProject.budget) * 0.9
+                    ? styles.budgetNear
+                    : styles.budgetUnder
+                }`}
+                style={{
+                  width: `${Math.min((grandTotal / parseFloat(activeProject.budget)) * 100, 100)}%`
+                }}
+              />
+            </div>
+            <div className={styles.budgetMarkers}>
+              <span>$0</span>
+              <span>${parseFloat(activeProject.budget).toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {materials.length > 0 && (
+        <div className={styles.roomCard}>
+          <div className={styles.roomHeader}>
+            <div>
+              <span className={styles.roomName}>Materials summary</span>
+              <span className={styles.roomDims}>Consolidated across all rooms</span>
+            </div>
+          </div>
+          <table className={styles.table}>
+            <colgroup>
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th>Application</th>
+                <th>Rooms</th>
+                <th>Total quantity</th>
+                <th>Total cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.values(
+                materials.reduce((groups, mat) => {
+                  const key = `${mat.name}__${mat.application}`
+                  const qty = getQuantity(mat, rooms)
+                  const total = getLineTotal(mat, rooms)
+                  const room = rooms.find(r => r.id === mat.room_id)
+                  const appT = APPLICATION_TYPES.find(a => a.value === mat.application)
+                  if (!groups[key]) {
+                    groups[key] = {
+                      name: mat.name,
+                      application: mat.application,
+                      appLabel: appT ? appT.label : '—',
+                      unit: appT ? appT.unit : '',
+                      roomNames: [],
+                      totalQty: 0,
+                      totalCost: 0,
+                    }
+                  }
+                  groups[key].totalQty += qty
+                  groups[key].totalCost += total
+                  if (room && !groups[key].roomNames.includes(room.name)) {
+                    groups[key].roomNames.push(room.name)
+                  }
+                  return groups
+                }, {})
+              ).map((group, i) => (
+                <tr key={i}>
+                  <td><strong>{group.name}</strong></td>
+                  <td>{group.appLabel}</td>
+                  <td>{group.roomNames.join(', ') || '—'}</td>
+                  <td>{group.totalQty.toFixed(2)} {group.unit}</td>
+                  <td><strong>${group.totalCost.toLocaleString()}</strong></td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan="4" className={styles.totalLabel}>Total materials cost</td>
+                <td className={styles.totalValue}>${totalMaterials.toLocaleString()}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
+
       {roomEstimates.map(({ room, roomMaterials, materialTotal, laborTotal, subtotal }) => (
         <div key={room.id} className={styles.roomCard}>
           <div className={styles.roomHeader}>

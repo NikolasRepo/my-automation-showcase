@@ -197,7 +197,7 @@ function App() {
             />}
           />
           <Route path="/estimates" element={
-            <Estimates rooms={rooms} materials={materials} />}
+            <Estimates rooms={rooms} materials={materials} activeProject={activeProject} />}
           />
           <Route path="/tasks" element={
             <Tasks

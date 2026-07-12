@@ -4,6 +4,7 @@ import styles from './Projects.module.css'
 const emptyProject = {
   name: '',
   clientName: '',
+  budget: '',
 }
 
 export default function Projects({ projects, activeProjectId, setActiveProjectId, onCreateProject, onUpdateProject, onDeleteProject, summaries }) {
@@ -21,10 +22,18 @@ export default function Projects({ projects, activeProjectId, setActiveProjectId
     setSaving(true)
     try {
       if (editId !== null) {
-        await onUpdateProject(editId, { name: form.name, client_name: form.clientName })
+        await onUpdateProject(editId, {
+          name: form.name,
+          client_name: form.clientName,
+          budget: form.budget ? parseFloat(form.budget) : null,
+        })
         setEditId(null)
       } else {
-        await onCreateProject({ name: form.name, client_name: form.clientName })
+        await onCreateProject({
+          name: form.name,
+          client_name: form.clientName,
+          budget: form.budget ? parseFloat(form.budget) : null,
+        })
       }
       setForm(emptyProject)
       setShowForm(false)
@@ -36,7 +45,11 @@ export default function Projects({ projects, activeProjectId, setActiveProjectId
   }
 
   function handleEdit(project) {
-    setForm({ name: project.name, clientName: project.client_name || '' })
+    setForm({
+      name: project.name,
+      clientName: project.client_name || '',
+      budget: project.budget || '',
+    })
     setEditId(project.id)
     setShowForm(true)
   }
@@ -90,6 +103,17 @@ export default function Projects({ projects, activeProjectId, setActiveProjectId
                 value={form.clientName}
                 onChange={handleChange}
                 placeholder="e.g. John Smith"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Budget (optional, $)</label>
+              <input
+                className={styles.input}
+                name="budget"
+                type="number"
+                value={form.budget}
+                onChange={handleChange}
+                placeholder="e.g. 50000"
               />
             </div>
           </div>
@@ -168,6 +192,44 @@ export default function Projects({ projects, activeProjectId, setActiveProjectId
                     <span className={styles.summaryLabel}>Tasks done</span>
                   </div>
                 </div>
+
+                {project.budget && (
+                  <div className={styles.budgetBar}>
+                    <div className={styles.budgetInfo}>
+                      <span className={styles.budgetLabel}>Budget</span>
+                      <span className={styles.budgetAmount}>${parseFloat(project.budget).toLocaleString()}</span>
+                    </div>
+                    <div className={styles.budgetTrack}>
+                      <div
+                        className={`${styles.budgetFill} ${
+                          parseFloat(summary.material_cost || 0) > parseFloat(project.budget)
+                            ? styles.budgetOver
+                            : parseFloat(summary.material_cost || 0) > parseFloat(project.budget) * 0.9
+                            ? styles.budgetNear
+                            : styles.budgetUnder
+                        }`}
+                        style={{
+                          width: `${Math.min(
+                            (parseFloat(summary.material_cost || 0) / parseFloat(project.budget)) * 100,
+                            100
+                          )}%`
+                        }}
+                      />
+                    </div>
+                    <span className={`${styles.budgetStatus} ${
+                      parseFloat(summary.material_cost || 0) > parseFloat(project.budget)
+                        ? styles.budgetStatusOver
+                        : parseFloat(summary.material_cost || 0) > parseFloat(project.budget) * 0.9
+                        ? styles.budgetStatusNear
+                        : styles.budgetStatusUnder
+                    }`}>
+                      {parseFloat(summary.material_cost || 0) > parseFloat(project.budget)
+                        ? `$${(parseFloat(summary.material_cost || 0) - parseFloat(project.budget)).toLocaleString(undefined, {maximumFractionDigits: 0})} over`
+                        : `$${(parseFloat(project.budget) - parseFloat(summary.material_cost || 0)).toLocaleString(undefined, {maximumFractionDigits: 0})} remaining`
+                      }
+                    </span>
+                  </div>
+                )}
               </div>
             )
           })}
