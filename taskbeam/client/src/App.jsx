@@ -7,56 +7,139 @@ import Materials from './pages/Materials'
 import Estimates from './pages/Estimates'
 import Tasks from './pages/Tasks'
 import ClientView from './pages/ClientView'
-import { loadProjects, saveProjects } from './services/db'
+import { api } from './services/api'
 
 function App() {
   const [projects, setProjects] = useState([])
   const [activeProjectId, setActiveProjectId] = useState(null)
-  const [dbReady, setDbReady] = useState(false)
+  const [rooms, setRooms] = useState([])
+  const [materials, setMaterials] = useState([])
+  const [tasks, setTasks] = useState([])
+  const [loading, setLoading] = useState(true)
 
+  const activeProject = projects.find(p => p.id === activeProjectId) || null
+
+  // Load projects on startup
   useEffect(() => {
     async function init() {
-      const saved = await loadProjects()
-      if (saved && saved.length > 0) {
-        setProjects(saved)
-        setActiveProjectId(saved[0].id)
+      try {
+        const data = await api.getProjects()
+        setProjects(data)
+        if (data.length > 0) setActiveProjectId(data[0].id)
+      } catch (err) {
+        console.error('Failed to load projects:', err)
+      } finally {
+        setLoading(false)
       }
-      setDbReady(true)
     }
     init()
   }, [])
 
+  // Load rooms, materials, tasks when active project changes
   useEffect(() => {
-    if (dbReady) {
-      saveProjects(projects)
+    if (!activeProjectId) {
+      setRooms([])
+      setMaterials([])
+      setTasks([])
+      return
     }
-  }, [projects, dbReady])
+    async function loadProjectData() {
+      try {
+        const [r, m, t] = await Promise.all([
+          api.getRooms(activeProjectId),
+          api.getMaterials(activeProjectId),
+          api.getTasks(activeProjectId),
+        ])
+        setRooms(r)
+        setMaterials(m)
+        setTasks(t)
+      } catch (err) {
+        console.error('Failed to load project data:', err)
+      }
+    }
+    loadProjectData()
+  }, [activeProjectId])
 
-  const activeProject = projects.find(p => p.id === activeProjectId) || null
-
-  function updateActiveProject(field, value) {
-    setProjects(projects.map(p =>
-      p.id === activeProjectId ? { ...p, [field]: value } : p
-    ))
+  // Project operations
+  async function handleCreateProject(data) {
+    const project = await api.createProject(data)
+    setProjects(prev => [...prev, project])
+    setActiveProjectId(project.id)
+    return project
   }
 
-  const rooms = activeProject?.rooms || []
-  const materials = activeProject?.materials || []
-  const tasks = activeProject?.tasks || []
-
-  function setRooms(value) {
-    updateActiveProject('rooms', typeof value === 'function' ? value(rooms) : value)
+  async function handleUpdateProject(id, data) {
+    const project = await api.updateProject(id, data)
+    setProjects(prev => prev.map(p => p.id === id ? project : p))
+    return project
   }
 
-  function setMaterials(value) {
-    updateActiveProject('materials', typeof value === 'function' ? value(materials) : value)
+  async function handleDeleteProject(id) {
+    await api.deleteProject(id)
+    setProjects(prev => {
+      const remaining = prev.filter(p => p.id !== id)
+      if (activeProjectId === id) {
+        setActiveProjectId(remaining.length > 0 ? remaining[0].id : null)
+      }
+      return remaining
+    })
   }
 
-  function setTasks(value) {
-    updateActiveProject('tasks', typeof value === 'function' ? value(tasks) : value)
+  // Room operations
+  async function handleCreateRoom(data) {
+    const room = await api.createRoom({ ...data, project_id: activeProjectId })
+    setRooms(prev => [...prev, room])
+    return room
   }
 
-  if (!dbReady) {
+  async function handleUpdateRoom(id, data) {
+    const room = await api.updateRoom(id, data)
+    setRooms(prev => prev.map(r => r.id === id ? room : r))
+    return room
+  }
+
+  async function handleDeleteRoom(id) {
+    await api.deleteRoom(id)
+    setRooms(prev => prev.filter(r => r.id !== id))
+  }
+
+  // Material operations
+  async function handleCreateMaterial(data) {
+    const material = await api.createMaterial({ ...data, project_id: activeProjectId })
+    setMaterials(prev => [...prev, material])
+    return material
+  }
+
+  async function handleUpdateMaterial(id, data) {
+    const material = await api.updateMaterial(id, data)
+    setMaterials(prev => prev.map(m => m.id === id ? material : m))
+    return material
+  }
+
+  async function handleDeleteMaterial(id) {
+    await api.deleteMaterial(id)
+    setMaterials(prev => prev.filter(m => m.id !== id))
+  }
+
+  // Task operations
+  async function handleCreateTask(data) {
+    const task = await api.createTask({ ...data, project_id: activeProjectId })
+    setTasks(prev => [...prev, task])
+    return task
+  }
+
+  async function handleUpdateTask(id, data) {
+    const task = await api.updateTask(id, data)
+    setTasks(prev => prev.map(t => t.id === id ? task : t))
+    return task
+  }
+
+  async function handleDeleteTask(id) {
+    await api.deleteTask(id)
+    setTasks(prev => prev.filter(t => t.id !== id))
+  }
+
+  if (loading) {
     return <div style={{ padding: '24px' }}>Loading...</div>
   }
 
@@ -67,15 +150,42 @@ function App() {
           <Route path="/" element={
             <Projects
               projects={projects}
-              setProjects={setProjects}
               activeProjectId={activeProjectId}
               setActiveProjectId={setActiveProjectId}
+              onCreateProject={handleCreateProject}
+              onUpdateProject={handleUpdateProject}
+              onDeleteProject={handleDeleteProject}
             />}
           />
-          <Route path="/rooms" element={<Rooms rooms={rooms} setRooms={setRooms} />} />
-          <Route path="/materials" element={<Materials rooms={rooms} materials={materials} setMaterials={setMaterials} />} />
-          <Route path="/estimates" element={<Estimates rooms={rooms} materials={materials} />} />
-          <Route path="/tasks" element={<Tasks rooms={rooms} tasks={tasks} setTasks={setTasks} />} />
+          <Route path="/rooms" element={
+            <Rooms
+              rooms={rooms}
+              onCreateRoom={handleCreateRoom}
+              onUpdateRoom={handleUpdateRoom}
+              onDeleteRoom={handleDeleteRoom}
+            />}
+          />
+          <Route path="/materials" element={
+            <Materials
+              rooms={rooms}
+              materials={materials}
+              onCreateMaterial={handleCreateMaterial}
+              onUpdateMaterial={handleUpdateMaterial}
+              onDeleteMaterial={handleDeleteMaterial}
+            />}
+          />
+          <Route path="/estimates" element={
+            <Estimates rooms={rooms} materials={materials} />}
+          />
+          <Route path="/tasks" element={
+            <Tasks
+              rooms={rooms}
+              tasks={tasks}
+              onCreateTask={handleCreateTask}
+              onUpdateTask={handleUpdateTask}
+              onDeleteTask={handleDeleteTask}
+            />}
+          />
           <Route path="/client" element={
             <ClientView
               activeProject={activeProject}

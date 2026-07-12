@@ -23,11 +23,12 @@ const emptyTask = {
   clientVisible: false,
 }
 
-export default function Tasks({ rooms, tasks, setTasks }) {
+export default function Tasks({ rooms, tasks, onCreateTask, onUpdateTask, onDeleteTask }) {
   const [form, setForm] = useState(emptyTask)
   const [editId, setEditId] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [filterStatus, setFilterStatus] = useState('all')
+  const [saving, setSaving] = useState(false)
 
   const filtered = filterStatus === 'all'
     ? tasks
@@ -45,31 +46,54 @@ export default function Tasks({ rooms, tasks, setTasks }) {
     setForm({ ...form, [e.target.name]: value })
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!form.title) return
-    const entry = {
-      ...form,
-      roomId: form.roomId ? parseInt(form.roomId) : null,
-      id: editId !== null ? editId : Date.now(),
+    setSaving(true)
+    const data = {
+      room_id: form.roomId ? form.roomId : null,
+      title: form.title,
+      priority: form.priority,
+      status: form.status,
+      due_date: form.dueDate || null,
+      notes: form.notes,
+      client_visible: form.clientVisible,
     }
-    if (editId !== null) {
-      setTasks(tasks.map(t => t.id === editId ? entry : t))
-      setEditId(null)
-    } else {
-      setTasks([...tasks, entry])
+    try {
+      if (editId !== null) {
+        await onUpdateTask(editId, data)
+        setEditId(null)
+      } else {
+        await onCreateTask(data)
+      }
+      setForm(emptyTask)
+      setShowForm(false)
+    } catch (err) {
+      console.error('Failed to save task:', err)
+    } finally {
+      setSaving(false)
     }
-    setForm(emptyTask)
-    setShowForm(false)
   }
 
   function handleEdit(task) {
-    setForm({ ...task, roomId: task.roomId ? task.roomId.toString() : '' })
+    setForm({
+      title: task.title,
+      roomId: task.room_id || '',
+      priority: task.priority,
+      status: task.status,
+      dueDate: task.due_date ? task.due_date.split('T')[0] : '',
+      notes: task.notes || '',
+      clientVisible: task.client_visible || false,
+    })
     setEditId(task.id)
     setShowForm(true)
   }
 
-  function handleDelete(id) {
-    setTasks(tasks.filter(t => t.id !== id))
+  async function handleDelete(id) {
+    try {
+      await onDeleteTask(id)
+    } catch (err) {
+      console.error('Failed to delete task:', err)
+    }
   }
 
   function handleCancel() {
@@ -78,17 +102,41 @@ export default function Tasks({ rooms, tasks, setTasks }) {
     setShowForm(false)
   }
 
-  function handleStatusToggle(task) {
+  async function handleStatusToggle(task) {
     const next = task.status === 'todo'
       ? 'in-progress'
       : task.status === 'in-progress'
       ? 'done'
       : 'todo'
-    setTasks(tasks.map(t => t.id === task.id ? { ...t, status: next } : t))
+    try {
+      await onUpdateTask(task.id, {
+        room_id: task.room_id,
+        title: task.title,
+        priority: task.priority,
+        status: next,
+        due_date: task.due_date,
+        notes: task.notes,
+        client_visible: task.client_visible,
+      })
+    } catch (err) {
+      console.error('Failed to update task status:', err)
+    }
   }
 
-  function handleClientVisibleToggle(task) {
-    setTasks(tasks.map(t => t.id === task.id ? { ...t, clientVisible: !t.clientVisible } : t))
+  async function handleClientVisibleToggle(task) {
+    try {
+      await onUpdateTask(task.id, {
+        room_id: task.room_id,
+        title: task.title,
+        priority: task.priority,
+        status: task.status,
+        due_date: task.due_date,
+        notes: task.notes,
+        client_visible: !task.client_visible,
+      })
+    } catch (err) {
+      console.error('Failed to update task visibility:', err)
+    }
   }
 
   return (
@@ -192,8 +240,8 @@ export default function Tasks({ rooms, tasks, setTasks }) {
           </div>
           <div className={styles.formActions}>
             <button className={styles.btnSecondary} onClick={handleCancel}>Cancel</button>
-            <button className={styles.btnPrimary} onClick={handleSubmit}>
-              {editId ? 'Save changes' : 'Add task'}
+            <button className={styles.btnPrimary} onClick={handleSubmit} disabled={saving}>
+              {saving ? 'Saving...' : editId ? 'Save changes' : 'Add task'}
             </button>
           </div>
         </div>
@@ -206,8 +254,8 @@ export default function Tasks({ rooms, tasks, setTasks }) {
       ) : (
         <div className={styles.taskList}>
           {filtered.map(task => {
-            const room = rooms.find(r => r.id === task.roomId)
-            const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done'
+            const room = rooms.find(r => r.id === task.room_id)
+            const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done'
             return (
               <div key={task.id} className={`${styles.taskCard} ${task.status === 'done' ? styles.taskDone : ''}`}>
                 <div className={styles.taskMain}>
@@ -228,12 +276,12 @@ export default function Tasks({ rooms, tasks, setTasks }) {
                       <span className={`${styles.metaTag} ${styles[`status-${task.status}`]}`}>
                         {STATUSES.find(s => s.value === task.status)?.label}
                       </span>
-                      {task.dueDate && (
+                      {task.due_date && (
                         <span className={`${styles.metaTag} ${isOverdue ? styles.overdue : ''}`}>
-                          Due {new Date(task.dueDate).toLocaleDateString()}
+                          Due {new Date(task.due_date).toLocaleDateString()}
                         </span>
                       )}
-                      {task.clientVisible && (
+                      {task.client_visible && (
                         <span className={`${styles.metaTag} ${styles.clientTag}`}>
                           Visible to client
                         </span>
@@ -244,11 +292,11 @@ export default function Tasks({ rooms, tasks, setTasks }) {
                 </div>
                 <div className={styles.taskActions}>
                   <button
-                    className={`${styles.visibilityBtn} ${task.clientVisible ? styles.visibilityOn : ''}`}
+                    className={`${styles.visibilityBtn} ${task.client_visible ? styles.visibilityOn : ''}`}
                     onClick={() => handleClientVisibleToggle(task)}
-                    title={task.clientVisible ? 'Hide from client' : 'Show to client'}
+                    title={task.client_visible ? 'Hide from client' : 'Show to client'}
                   >
-                    {task.clientVisible ? 'Client: on' : 'Client: off'}
+                    {task.client_visible ? 'Client: on' : 'Client: off'}
                   </button>
                   <button className={styles.btnAction} onClick={() => handleEdit(task)}>Edit</button>
                   <button className={`${styles.btnAction} ${styles.btnDanger}`} onClick={() => handleDelete(task.id)}>Delete</button>

@@ -6,47 +6,46 @@ const emptyProject = {
   clientName: '',
 }
 
-export default function Projects({ projects, setProjects, activeProjectId, setActiveProjectId }) {
+export default function Projects({ projects, activeProjectId, setActiveProjectId, onCreateProject, onUpdateProject, onDeleteProject }) {
   const [form, setForm] = useState(emptyProject)
   const [editId, setEditId] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!form.name) return
-    if (editId !== null) {
-      setProjects(projects.map(p => p.id === editId ? { ...form, id: editId } : p))
-      setEditId(null)
-    } else {
-      const newProject = {
-        ...form,
-        id: Date.now(),
-        createdAt: new Date().toLocaleDateString(),
-        rooms: [],
-        materials: [],
-        tasks: [],
+    setSaving(true)
+    try {
+      if (editId !== null) {
+        await onUpdateProject(editId, { name: form.name, client_name: form.clientName })
+        setEditId(null)
+      } else {
+        await onCreateProject({ name: form.name, client_name: form.clientName })
       }
-      setProjects([...projects, newProject])
-      if (!activeProjectId) setActiveProjectId(newProject.id)
+      setForm(emptyProject)
+      setShowForm(false)
+    } catch (err) {
+      console.error('Failed to save project:', err)
+    } finally {
+      setSaving(false)
     }
-    setForm(emptyProject)
-    setShowForm(false)
   }
 
   function handleEdit(project) {
-    setForm({ name: project.name, clientName: project.clientName })
+    setForm({ name: project.name, clientName: project.client_name || '' })
     setEditId(project.id)
     setShowForm(true)
   }
 
-  function handleDelete(id) {
-    setProjects(projects.filter(p => p.id !== id))
-    if (activeProjectId === id) {
-      const remaining = projects.filter(p => p.id !== id)
-      setActiveProjectId(remaining.length > 0 ? remaining[0].id : null)
+  async function handleDelete(id) {
+    try {
+      await onDeleteProject(id)
+    } catch (err) {
+      console.error('Failed to delete project:', err)
     }
   }
 
@@ -96,8 +95,8 @@ export default function Projects({ projects, setProjects, activeProjectId, setAc
           </div>
           <div className={styles.formActions}>
             <button className={styles.btnSecondary} onClick={handleCancel}>Cancel</button>
-            <button className={styles.btnPrimary} onClick={handleSubmit}>
-              {editId ? 'Save changes' : 'Create project'}
+            <button className={styles.btnPrimary} onClick={handleSubmit} disabled={saving}>
+              {saving ? 'Saving...' : editId ? 'Save changes' : 'Create project'}
             </button>
           </div>
         </div>
@@ -110,13 +109,6 @@ export default function Projects({ projects, setProjects, activeProjectId, setAc
       ) : (
         <div className={styles.projectList}>
           {projects.map(project => {
-            const projectRooms = project.rooms || []
-            const projectMaterials = project.materials || []
-            const projectTasks = project.tasks || []
-            const totalArea = projectRooms.reduce((sum, r) =>
-              sum + parseFloat(r.length) * parseFloat(r.width), 0
-            )
-            const tasksDone = projectTasks.filter(t => t.status === 'done').length
             return (
               <div
                 key={project.id}
@@ -126,8 +118,8 @@ export default function Projects({ projects, setProjects, activeProjectId, setAc
                   <div className={styles.projectInfo}>
                     <span className={styles.projectName}>{project.name}</span>
                     <span className={styles.projectMeta}>
-                      {project.clientName ? `Client: ${project.clientName}` : 'No client set'}
-                      {' · '}Created {project.createdAt}
+                      {project.client_name ? `Client: ${project.client_name}` : 'No client set'}
+                      {' · '}Created {new Date(project.created_at).toLocaleDateString()}
                     </span>
                   </div>
                   <div className={styles.projectActions}>
@@ -149,32 +141,6 @@ export default function Projects({ projects, setProjects, activeProjectId, setAc
                     >
                       Delete
                     </button>
-                  </div>
-                </div>
-
-                <div className={styles.projectSummary}>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryValue}>{projectRooms.length}</span>
-                    <span className={styles.summaryLabel}>Rooms</span>
-                  </div>
-                  <div className={styles.summaryDivider} />
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryValue}>{totalArea.toFixed(0)} sq ft</span>
-                    <span className={styles.summaryLabel}>Total area</span>
-                  </div>
-                  <div className={styles.summaryDivider} />
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryValue}>{projectMaterials.length}</span>
-                    <span className={styles.summaryLabel}>Materials</span>
-                  </div>
-                  <div className={styles.summaryDivider} />
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryValue}>
-                      {projectTasks.length > 0
-                        ? `${tasksDone}/${projectTasks.length}`
-                        : '—'}
-                    </span>
-                    <span className={styles.summaryLabel}>Tasks done</span>
                   </div>
                 </div>
               </div>

@@ -30,17 +30,17 @@ function calcRoomDimensions(room) {
 }
 
 function getQuantity(material, rooms) {
-  const room = rooms.find(r => r.id === material.roomId)
+  const room = rooms.find(r => r.id === material.room_id)
   if (!room) return 0
   const appT = APPLICATION_TYPES.find(a => a.value === material.application)
-  if (!appT || appT.dimensionKey === null) return parseFloat(material.customQty) || 0
+  if (!appT || appT.dimensionKey === null) return parseFloat(material.custom_qty) || 0
   const dims = calcRoomDimensions(room)
   return dims[appT.dimensionKey] || 0
 }
 
 function getLineTotal(material, rooms) {
   const qty = getQuantity(material, rooms)
-  const cost = parseFloat(material.unitCost) || 0
+  const cost = parseFloat(material.unit_cost) || 0
   return parseFloat((qty * cost).toFixed(2))
 }
 
@@ -53,18 +53,18 @@ export default function Estimates({ rooms, materials }) {
   }
 
   const roomEstimates = rooms.map(room => {
-    const roomMaterials = materials.filter(m => m.roomId === room.id)
-    const materialTotal = roomMaterials.reduce((sum, m) => sum + getLineTotal(m, rooms), 0)
-    const laborTotal = parseFloat(laborRates[room.id] || 0)
-    const subtotal = materialTotal + laborTotal
-    return {
-      room,
-      roomMaterials,
-      materialTotal: parseFloat(materialTotal.toFixed(2)),
-      laborTotal: parseFloat(laborTotal.toFixed(2)),
-      subtotal: parseFloat(subtotal.toFixed(2)),
-    }
-  })
+   const roomMaterials = materials.filter(m => m.room_id === room.id)
+   const materialTotal = roomMaterials.reduce((sum, m) => sum + getLineTotal(m, rooms), 0)
+   const laborTotal = parseFloat(laborRates[room.id] || 0)
+   const subtotal = materialTotal + laborTotal
+   return {
+     room,
+     roomMaterials,
+     materialTotal: parseFloat(materialTotal.toFixed(2)),
+     laborTotal: parseFloat(laborTotal.toFixed(2)),
+     subtotal: parseFloat(subtotal.toFixed(2)),
+   }
+ })
 
   const totalMaterials = roomEstimates.reduce((sum, r) => sum + r.materialTotal, 0)
   const totalLabor = roomEstimates.reduce((sum, r) => sum + r.laborTotal, 0)

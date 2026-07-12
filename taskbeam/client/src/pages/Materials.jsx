@@ -38,26 +38,27 @@ const emptyMaterial = {
   notes: '',
 }
 
-export default function Materials({ rooms, materials, setMaterials }) {
+export default function Materials({ rooms, materials, onCreateMaterial, onUpdateMaterial, onDeleteMaterial }) {
   const [form, setForm] = useState(emptyMaterial)
   const [editId, setEditId] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [saving, setSaving] = useState(false)
 
-  const selectedRoom = rooms.find(r => r.id === parseInt(form.roomId)) || null
+  const selectedRoom = rooms.find(r => r.id === form.roomId) || null
   const appType = APPLICATION_TYPES.find(a => a.value === form.application)
 
   function getQuantity(material) {
-    const room = rooms.find(r => r.id === material.roomId)
+    const room = rooms.find(r => r.id === material.room_id)
     if (!room) return 0
     const appT = APPLICATION_TYPES.find(a => a.value === material.application)
-    if (!appT || appT.dimensionKey === null) return parseFloat(material.customQty) || 0
+    if (!appT || appT.dimensionKey === null) return parseFloat(material.custom_qty) || 0
     const dims = calcRoomDimensions(room)
     return dims[appT.dimensionKey] || 0
   }
 
   function getLineTotal(material) {
     const qty = getQuantity(material)
-    const cost = parseFloat(material.unitCost) || 0
+    const cost = parseFloat(material.unit_cost) || 0
     return parseFloat((qty * cost).toFixed(2))
   }
 
@@ -67,31 +68,52 @@ export default function Materials({ rooms, materials, setMaterials }) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!form.roomId || !form.name || !form.application) return
-    const entry = {
-      ...form,
-      roomId: parseInt(form.roomId),
-      id: editId !== null ? editId : Date.now(),
+    setSaving(true)
+    const data = {
+      room_id: form.roomId,
+      name: form.name,
+      application: form.application,
+      unit_cost: parseFloat(form.unitCost) || 0,
+      custom_qty: form.customQty ? parseFloat(form.customQty) : null,
+      notes: form.notes,
     }
-    if (editId !== null) {
-      setMaterials(materials.map(m => m.id === editId ? entry : m))
-      setEditId(null)
-    } else {
-      setMaterials([...materials, entry])
+    try {
+      if (editId !== null) {
+        await onUpdateMaterial(editId, data)
+        setEditId(null)
+      } else {
+        await onCreateMaterial(data)
+      }
+      setForm(emptyMaterial)
+      setShowForm(false)
+    } catch (err) {
+      console.error('Failed to save material:', err)
+    } finally {
+      setSaving(false)
     }
-    setForm(emptyMaterial)
-    setShowForm(false)
   }
 
   function handleEdit(mat) {
-    setForm({ ...mat, roomId: mat.roomId.toString() })
+    setForm({
+      roomId: mat.room_id || '',
+      name: mat.name,
+      application: mat.application,
+      unitCost: mat.unit_cost || '',
+      customQty: mat.custom_qty || '',
+      notes: mat.notes || '',
+    })
     setEditId(mat.id)
     setShowForm(true)
   }
 
-  function handleDelete(id) {
-    setMaterials(materials.filter(m => m.id !== id))
+  async function handleDelete(id) {
+    try {
+      await onDeleteMaterial(id)
+    } catch (err) {
+      console.error('Failed to delete material:', err)
+    }
   }
 
   function handleCancel() {
@@ -175,8 +197,8 @@ export default function Materials({ rooms, materials, setMaterials }) {
           </div>
           <div className={styles.formActions}>
             <button className={styles.btnSecondary} onClick={handleCancel}>Cancel</button>
-            <button className={styles.btnPrimary} onClick={handleSubmit}>
-              {editId ? 'Save changes' : 'Add material'}
+            <button className={styles.btnPrimary} onClick={handleSubmit} disabled={saving}>
+              {saving ? 'Saving...' : editId ? 'Save changes' : 'Add material'}
             </button>
           </div>
         </div>
@@ -203,7 +225,7 @@ export default function Materials({ rooms, materials, setMaterials }) {
             </thead>
             <tbody>
               {materials.map(mat => {
-                const room = rooms.find(r => r.id === mat.roomId)
+                const room = rooms.find(r => r.id === mat.room_id)
                 const appT = APPLICATION_TYPES.find(a => a.value === mat.application)
                 const qty = getQuantity(mat)
                 const total = getLineTotal(mat)
@@ -213,7 +235,7 @@ export default function Materials({ rooms, materials, setMaterials }) {
                     <td>{room ? room.name : '—'}</td>
                     <td>{appT ? appT.label : '—'}</td>
                     <td>{qty} {appT ? appT.unit : ''}</td>
-                    <td>${parseFloat(mat.unitCost || 0).toFixed(2)}</td>
+                    <td>${parseFloat(mat.unit_cost || 0).toFixed(2)}</td>
                     <td><strong>${total.toLocaleString()}</strong></td>
                     <td className={styles.notes}>{mat.notes || '—'}</td>
                     <td>

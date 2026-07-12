@@ -12,10 +12,6 @@ function calcArea(l, w) {
   return parseFloat((parseFloat(l) * parseFloat(w)).toFixed(2))
 }
 
-function calcWallArea(l, w, h) {
-  return parseFloat((2 * (parseFloat(l) + parseFloat(w)) * parseFloat(h)).toFixed(2))
-}
-
 function calcMaterials(room) {
   const l = parseFloat(room.length)
   const w = parseFloat(room.width)
@@ -36,10 +32,11 @@ const emptyRoom = {
   status: 'planned',
 }
 
-export default function Rooms({ rooms, setRooms }) {
+export default function Rooms({ rooms, onCreateRoom, onUpdateRoom, onDeleteRoom }) {
   const [form, setForm] = useState(emptyRoom)
   const [editId, setEditId] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const totalArea = rooms.reduce((sum, r) => sum + calcArea(r.length, r.width), 0)
 
@@ -47,26 +44,43 @@ export default function Rooms({ rooms, setRooms }) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!form.name || !form.length || !form.width || !form.height) return
-    if (editId !== null) {
-      setRooms(rooms.map(r => r.id === editId ? { ...form, id: editId } : r))
-      setEditId(null)
-    } else {
-      setRooms([...rooms, { ...form, id: Date.now() }])
+    setSaving(true)
+    try {
+      if (editId !== null) {
+        await onUpdateRoom(editId, form)
+        setEditId(null)
+      } else {
+        await onCreateRoom(form)
+      }
+      setForm(emptyRoom)
+      setShowForm(false)
+    } catch (err) {
+      console.error('Failed to save room:', err)
+    } finally {
+      setSaving(false)
     }
-    setForm(emptyRoom)
-    setShowForm(false)
   }
 
   function handleEdit(room) {
-    setForm(room)
+    setForm({
+      name: room.name,
+      length: room.length,
+      width: room.width,
+      height: room.height,
+      status: room.status,
+    })
     setEditId(room.id)
     setShowForm(true)
   }
 
-  function handleDelete(id) {
-    setRooms(rooms.filter(r => r.id !== id))
+  async function handleDelete(id) {
+    try {
+      await onDeleteRoom(id)
+    } catch (err) {
+      console.error('Failed to delete room:', err)
+    }
   }
 
   function handleCancel() {
@@ -118,8 +132,8 @@ export default function Rooms({ rooms, setRooms }) {
           </div>
           <div className={styles.formActions}>
             <button className={styles.btnSecondary} onClick={handleCancel}>Cancel</button>
-            <button className={styles.btnPrimary} onClick={handleSubmit}>
-              {editId ? 'Save changes' : 'Add room'}
+            <button className={styles.btnPrimary} onClick={handleSubmit} disabled={saving}>
+              {saving ? 'Saving...' : editId ? 'Save changes' : 'Add room'}
             </button>
           </div>
         </div>

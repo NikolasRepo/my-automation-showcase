@@ -29,17 +29,17 @@ function calcRoomDimensions(room) {
 }
 
 function getQuantity(material, rooms) {
-  const room = rooms.find(r => r.id === material.roomId)
+  const room = rooms.find(r => r.id === material.room_id)
   if (!room) return 0
   const appT = APPLICATION_TYPES.find(a => a.value === material.application)
-  if (!appT || appT.dimensionKey === null) return parseFloat(material.customQty) || 0
+  if (!appT || appT.dimensionKey === null) return parseFloat(material.custom_qty) || 0
   const dims = calcRoomDimensions(room)
   return dims[appT.dimensionKey] || 0
 }
 
 function getLineTotal(material, rooms) {
   const qty = getQuantity(material, rooms)
-  const cost = parseFloat(material.unitCost) || 0
+  const cost = parseFloat(material.unit_cost) || 0
   return parseFloat((qty * cost).toFixed(2))
 }
 
@@ -60,7 +60,7 @@ export default function ClientView({ activeProject, rooms, materials, tasks }) {
     sum + getLineTotal(m, rooms), 0
   )
 
-  const clientTasks = tasks.filter(t => t.clientVisible)
+  const clientTasks = tasks.filter(t => t.client_visible)
 
   return (
     <div className={styles.page}>
@@ -68,8 +68,8 @@ export default function ClientView({ activeProject, rooms, materials, tasks }) {
         <div className={styles.headerLeft}>
           <span className={styles.brandMark}>TaskBeam</span>
           <h1 className={styles.projectName}>{activeProject.name}</h1>
-          {activeProject.clientName && (
-            <p className={styles.clientName}>Prepared for {activeProject.clientName}</p>
+          {activeProject.client_name && (
+            <p className={styles.clientName}>Prepared for {activeProject.client_name}</p>
           )}
         </div>
         <div className={styles.headerRight}>
@@ -145,7 +145,7 @@ export default function ClientView({ activeProject, rooms, materials, tasks }) {
               </thead>
               <tbody>
                 {materials.map(mat => {
-                  const room = rooms.find(r => r.id === mat.roomId)
+                  const room = rooms.find(r => r.id === mat.room_id)
                   const appT = APPLICATION_TYPES.find(a => a.value === mat.application)
                   const qty = getQuantity(mat, rooms)
                   const total = getLineTotal(mat, rooms)
@@ -155,7 +155,7 @@ export default function ClientView({ activeProject, rooms, materials, tasks }) {
                       <td>{room ? room.name : '—'}</td>
                       <td>{appT ? appT.label : '—'}</td>
                       <td>{qty} {appT ? appT.unit : ''}</td>
-                      <td>${parseFloat(mat.unitCost || 0).toFixed(2)}</td>
+                      <td>${parseFloat(mat.unit_cost || 0).toFixed(2)}</td>
                       <td><strong>${total.toLocaleString()}</strong></td>
                     </tr>
                   )
@@ -188,14 +188,14 @@ export default function ClientView({ activeProject, rooms, materials, tasks }) {
               </thead>
               <tbody>
                 {clientTasks.map(task => {
-                  const room = rooms.find(r => r.id === task.roomId)
+                  const room = rooms.find(r => r.id === task.room_id)
                   return (
                     <tr key={task.id}>
                       <td><strong>{task.title}</strong></td>
                       <td>{room ? room.name : '—'}</td>
                       <td>{task.priority}</td>
                       <td><span className={`${styles.badge} ${styles[task.status]}`}>{task.status}</span></td>
-                      <td>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}</td>
+                      <td>{task.due_date ? new Date(task.due_date).toLocaleDateString() : '—'}</td>
                     </tr>
                   )
                 })}
