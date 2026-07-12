@@ -6,7 +6,7 @@ const emptyProject = {
   clientName: '',
 }
 
-export default function Projects({ projects, activeProjectId, setActiveProjectId, onCreateProject, onUpdateProject, onDeleteProject }) {
+export default function Projects({ projects, activeProjectId, setActiveProjectId, onCreateProject, onUpdateProject, onDeleteProject, summaries }) {
   const [form, setForm] = useState(emptyProject)
   const [editId, setEditId] = useState(null)
   const [showForm, setShowForm] = useState(false)
@@ -109,6 +109,7 @@ export default function Projects({ projects, activeProjectId, setActiveProjectId
       ) : (
         <div className={styles.projectList}>
           {projects.map(project => {
+            const summary = summaries[project.id] || {}
             return (
               <div
                 key={project.id}
@@ -141,6 +142,32 @@ export default function Projects({ projects, activeProjectId, setActiveProjectId
                     >
                       Delete
                     </button>
+                  </div>
+                </div>
+
+                <div className={styles.projectSummary}>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryValue}>{summary.room_count || 0}</span>
+                    <span className={styles.summaryLabel}>Rooms</span>
+                  </div>
+                  <div className={styles.summaryDivider} />
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryValue}>{parseFloat(summary.total_area || 0).toFixed(0)} sq ft</span>
+                    <span className={styles.summaryLabel}>Total area</span>
+                  </div>
+                  <div className={styles.summaryDivider} />
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryValue}>{summary.material_count || 0}</span>
+                    <span className={styles.summaryLabel}>Materials</span>
+                  </div>
+                  <div className={styles.summaryDivider} />
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryValue}>
+                      {summary.task_count > 0
+                        ? `${summary.tasks_done}/${summary.task_count}`
+                        : '—'}
+                    </span>
+                    <span className={styles.summaryLabel}>Tasks done</span>
                   </div>
                 </div>
               </div>

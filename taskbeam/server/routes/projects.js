@@ -15,6 +15,30 @@ router.get('/', async (req, res) => {
   }
 })
 
+// Get summary stats for all projects
+router.get('/summary/all', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        p.id,
+        COUNT(DISTINCT r.id) as room_count,
+        COALESCE(SUM(r.length * r.width), 0) as total_area,
+        COUNT(DISTINCT m.id) as material_count,
+        COUNT(DISTINCT t.id) as task_count,
+        COUNT(DISTINCT CASE WHEN t.status = 'done' THEN t.id END) as tasks_done
+      FROM projects p
+      LEFT JOIN rooms r ON r.project_id = p.id
+      LEFT JOIN materials m ON m.project_id = p.id
+      LEFT JOIN tasks t ON t.project_id = p.id
+      GROUP BY p.id
+    `)
+    res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Failed to fetch project summaries' })
+  }
+})
+
 // Get single project
 router.get('/:id', async (req, res) => {
   try {

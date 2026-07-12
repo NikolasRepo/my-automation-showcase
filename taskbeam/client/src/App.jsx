@@ -15,16 +15,22 @@ function App() {
   const [rooms, setRooms] = useState([])
   const [materials, setMaterials] = useState([])
   const [tasks, setTasks] = useState([])
+  const [summaries, setSummaries] = useState({})
   const [loading, setLoading] = useState(true)
 
   const activeProject = projects.find(p => p.id === activeProjectId) || null
 
-  // Load projects on startup
   useEffect(() => {
     async function init() {
       try {
-        const data = await api.getProjects()
+        const [data, summaryData] = await Promise.all([
+          api.getProjects(),
+          api.getProjectSummaries(),
+        ])
         setProjects(data)
+        const summaryMap = {}
+        summaryData.forEach(s => { summaryMap[s.id] = s })
+        setSummaries(summaryMap)
         if (data.length > 0) setActiveProjectId(data[0].id)
       } catch (err) {
         console.error('Failed to load projects:', err)
@@ -35,7 +41,6 @@ function App() {
     init()
   }, [])
 
-  // Load rooms, materials, tasks when active project changes
   useEffect(() => {
     if (!activeProjectId) {
       setRooms([])
@@ -60,11 +65,22 @@ function App() {
     loadProjectData()
   }, [activeProjectId])
 
-  // Project operations
+  async function refreshSummaries() {
+    try {
+      const summaryData = await api.getProjectSummaries()
+      const summaryMap = {}
+      summaryData.forEach(s => { summaryMap[s.id] = s })
+      setSummaries(summaryMap)
+    } catch (err) {
+      console.error('Failed to refresh summaries:', err)
+    }
+  }
+
   async function handleCreateProject(data) {
     const project = await api.createProject(data)
     setProjects(prev => [...prev, project])
     setActiveProjectId(project.id)
+    refreshSummaries()
     return project
   }
 
@@ -83,30 +99,33 @@ function App() {
       }
       return remaining
     })
+    refreshSummaries()
   }
 
-  // Room operations
   async function handleCreateRoom(data) {
     const room = await api.createRoom({ ...data, project_id: activeProjectId })
     setRooms(prev => [...prev, room])
+    refreshSummaries()
     return room
   }
 
   async function handleUpdateRoom(id, data) {
     const room = await api.updateRoom(id, data)
     setRooms(prev => prev.map(r => r.id === id ? room : r))
+    refreshSummaries()
     return room
   }
 
   async function handleDeleteRoom(id) {
     await api.deleteRoom(id)
     setRooms(prev => prev.filter(r => r.id !== id))
+    refreshSummaries()
   }
 
-  // Material operations
   async function handleCreateMaterial(data) {
     const material = await api.createMaterial({ ...data, project_id: activeProjectId })
     setMaterials(prev => [...prev, material])
+    refreshSummaries()
     return material
   }
 
@@ -119,12 +138,13 @@ function App() {
   async function handleDeleteMaterial(id) {
     await api.deleteMaterial(id)
     setMaterials(prev => prev.filter(m => m.id !== id))
+    refreshSummaries()
   }
 
-  // Task operations
   async function handleCreateTask(data) {
     const task = await api.createTask({ ...data, project_id: activeProjectId })
     setTasks(prev => [...prev, task])
+    refreshSummaries()
     return task
   }
 
@@ -137,6 +157,7 @@ function App() {
   async function handleDeleteTask(id) {
     await api.deleteTask(id)
     setTasks(prev => prev.filter(t => t.id !== id))
+    refreshSummaries()
   }
 
   if (loading) {
@@ -155,6 +176,7 @@ function App() {
               onCreateProject={handleCreateProject}
               onUpdateProject={handleUpdateProject}
               onDeleteProject={handleDeleteProject}
+              summaries={summaries}
             />}
           />
           <Route path="/rooms" element={
