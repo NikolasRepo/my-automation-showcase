@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Layout from './components/layout/Layout'
 import Projects from './pages/Projects'
 import Rooms from './pages/Rooms'
@@ -7,10 +7,30 @@ import Materials from './pages/Materials'
 import Estimates from './pages/Estimates'
 import Tasks from './pages/Tasks'
 import ClientView from './pages/ClientView'
+import { loadProjects, saveProjects } from './services/db'
 
 function App() {
   const [projects, setProjects] = useState([])
   const [activeProjectId, setActiveProjectId] = useState(null)
+  const [dbReady, setDbReady] = useState(false)
+
+  useEffect(() => {
+    async function init() {
+      const saved = await loadProjects()
+      if (saved && saved.length > 0) {
+        setProjects(saved)
+        setActiveProjectId(saved[0].id)
+      }
+      setDbReady(true)
+    }
+    init()
+  }, [])
+
+  useEffect(() => {
+    if (dbReady) {
+      saveProjects(projects)
+    }
+  }, [projects, dbReady])
 
   const activeProject = projects.find(p => p.id === activeProjectId) || null
 
@@ -34,6 +54,10 @@ function App() {
 
   function setTasks(value) {
     updateActiveProject('tasks', typeof value === 'function' ? value(tasks) : value)
+  }
+
+  if (!dbReady) {
+    return <div style={{ padding: '24px' }}>Loading...</div>
   }
 
   return (
