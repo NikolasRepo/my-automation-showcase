@@ -1,0 +1,101 @@
+.shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 210px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-right: 1px solid #e5e5e3;
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
+  padding: 16px;
+  border-bottom: 1px solid #e5e5e3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brandName {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.brandSub {
+  font-size: 12px;
+  color: #888;
+}
+
+.activeProject {
+  padding: 10px 16px;
+  border-bottom: 1px solid #e5e5e3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #fafcff;
+}
+
+.activeProjectLabel {
+  font-size: 10px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.activeProjectName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d4ed8;
+}
+
+.activeProjectClient {
+  font-size: 12px;
+  color: #888;
+}
+
+.nav {
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navLabel {
+  font-size: 11px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 8px;
+  margin-bottom: 2px;
+}
+
+.navItem {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #555;
+  transition: background 0.15s;
+}
+
+.navItem:hover {
+  background: #f5f5f4;
+  color: #1a1a1a;
+}
+
+.active {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+  background: #f5f5f4;
+}
