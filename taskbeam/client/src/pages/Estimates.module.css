@@ -7,19 +7,21 @@
 
 .topbar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
 }
 
 .title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 700;
   color: #1a1a1a;
 }
 
 .sub {
   font-size: 13px;
   color: #888;
+  margin-top: 2px;
+  display: block;
 }
 
 .notice {
@@ -33,32 +35,39 @@
 
 .summaryRow {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
 
 .summaryCard {
-  background: #f5f5f4;
-  border-radius: 8px;
-  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e5e5e3;
+  border-radius: 12px;
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .summaryTotal {
   background: #eff6ff;
+  border-color: #bfdbfe;
 }
 
 .summaryLabel {
-  font-size: 12px;
+  font-size: 11px;
   color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
 }
 
 .summaryValue {
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 700;
   color: #1a1a1a;
+  line-height: 1.2;
 }
 
 .summaryTotal .summaryValue {
@@ -69,12 +78,17 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  background: #fff;
+  border: 1px solid #e5e5e3;
+  border-radius: 10px;
+  padding: 12px 16px;
 }
 
 .label {
-  font-size: 12px;
-  color: #666;
+  font-size: 13px;
+  color: #555;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .contingencyControls {
@@ -86,9 +100,10 @@
   background: #fff;
   border: 1px solid #d1d1cf;
   border-radius: 6px;
-  padding: 5px 12px;
+  padding: 5px 14px;
   font-size: 13px;
   color: #555;
+  transition: background 0.15s;
 }
 
 .pctBtn:hover {
@@ -99,30 +114,31 @@
   background: #eff6ff;
   border-color: #1d4ed8;
   color: #1d4ed8;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .roomCard {
   background: #fff;
   border: 1px solid #e5e5e3;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .roomHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 16px 20px;
   border-bottom: 1px solid #f0f0ee;
   background: #fafafa;
 }
 
 .roomName {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: #1a1a1a;
   display: block;
 }
@@ -130,11 +146,13 @@
 .roomDims {
   font-size: 12px;
   color: #888;
+  margin-top: 2px;
+  display: block;
 }
 
 .roomSubtotal {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   color: #1a1a1a;
 }
 
@@ -146,34 +164,43 @@
 
 .table th {
   text-align: left;
-  padding: 8px 16px;
+  padding: 10px 20px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   border-bottom: 1px solid #f0f0ee;
+  background: #fdfdfd;
 }
 
 .table td {
-  padding: 8px 16px;
+  padding: 11px 20px;
   border-bottom: 1px solid #f0f0ee;
   color: #1a1a1a;
+  vertical-align: middle;
 }
 
 .table tr:last-child td {
   border-bottom: none;
 }
 
+.table tr:hover td {
+  background: #fafafa;
+}
+
 .noMaterials {
-  padding: 12px 16px;
+  padding: 14px 20px;
   font-size: 13px;
   color: #aaa;
+  font-style: italic;
 }
 
 .laborRow {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
+  padding: 12px 20px;
   border-top: 1px solid #f0f0ee;
   background: #fafafa;
 }
@@ -187,6 +214,7 @@
   color: #1a1a1a;
   background: #fff;
   outline: none;
+  transition: border-color 0.15s;
 }
 
 .laborInput:focus {
@@ -200,9 +228,60 @@
 
 .roomTotals {
   display: flex;
-  gap: 20px;
-  padding: 10px 16px;
+  gap: 24px;
+  padding: 12px 20px;
   font-size: 13px;
   color: #555;
   border-top: 1px solid #f0f0ee;
+  background: #fff;
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .summaryRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summaryValue {
+    font-size: 20px;
+  }
+
+  .roomTotals {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .contingencyRow {
+    flex-wrap: wrap;
+  }
+}
+
+.table col:nth-child(1) { width: 25%; }
+.table col:nth-child(2) { width: 20%; }
+.table col:nth-child(3) { width: 20%; }
+.table col:nth-child(4) { width: 15%; }
+.table col:nth-child(5) { width: 20%; }
+
+.totalLabel {
+  text-align: right;
+  font-weight: 600;
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 12px 20px;
+}
+
+.totalValue {
+  font-weight: 700;
+  font-size: 15px;
+  color: #1a1a1a;
+  padding: 12px 20px;
 }

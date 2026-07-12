@@ -149,9 +149,7 @@ export default function Rooms({ rooms, onCreateRoom, onUpdateRoom, onDeleteRoom 
             <thead>
               <tr>
                 <th>Room</th>
-                <th>Length</th>
-                <th>Width</th>
-                <th>Height</th>
+                <th>Dimensions</th>
                 <th>Area</th>
                 <th>Floor (w/ waste)</th>
                 <th>Wall area (w/ waste)</th>
@@ -166,9 +164,7 @@ export default function Rooms({ rooms, onCreateRoom, onUpdateRoom, onDeleteRoom 
                 return (
                   <tr key={room.id}>
                     <td><strong>{room.name}</strong></td>
-                    <td>{room.length} ft</td>
-                    <td>{room.width} ft</td>
-                    <td>{room.height} ft</td>
+                    <td>{room.length} × {room.width} × {room.height} ft</td>
                     <td><strong>{calcArea(room.length, room.width)} sq ft</strong></td>
                     <td>{m.floorArea} sq ft</td>
                     <td>{m.wallArea} sq ft</td>

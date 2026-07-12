@@ -25,10 +25,20 @@ router.get('/summary/all', async (req, res) => {
         COALESCE(SUM(r.length * r.width), 0) as total_area,
         COUNT(DISTINCT m.id) as material_count,
         COUNT(DISTINCT t.id) as task_count,
-        COUNT(DISTINCT CASE WHEN t.status = 'done' THEN t.id END) as tasks_done
+        COUNT(DISTINCT CASE WHEN t.status = 'done' THEN t.id END) as tasks_done,
+        COALESCE(SUM(
+          CASE 
+            WHEN m.application = 'floor' THEN r.length * r.width * 1.10 * m.unit_cost
+            WHEN m.application = 'wall' THEN 2 * (r.length + r.width) * r.height * 1.12 * m.unit_cost
+            WHEN m.application = 'ceiling' THEN r.length * r.width * 1.08 * m.unit_cost
+            WHEN m.application = 'baseboard' THEN 2 * (r.length + r.width) * 1.10 * m.unit_cost
+            WHEN m.application = 'custom' THEN m.custom_qty * m.unit_cost
+            ELSE 0
+          END
+        ), 0) as material_cost
       FROM projects p
       LEFT JOIN rooms r ON r.project_id = p.id
-      LEFT JOIN materials m ON m.project_id = p.id
+      LEFT JOIN materials m ON m.project_id = p.id AND m.room_id = r.id
       LEFT JOIN tasks t ON t.project_id = p.id
       GROUP BY p.id
     `)

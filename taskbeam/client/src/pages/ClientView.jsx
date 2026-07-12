@@ -104,9 +104,7 @@ export default function ClientView({ activeProject, rooms, materials, tasks }) {
               <thead>
                 <tr>
                   <th>Room</th>
-                  <th>Length</th>
-                  <th>Width</th>
-                  <th>Ceiling height</th>
+                  <th>Dimension</th>
                   <th>Area</th>
                   <th>Status</th>
                 </tr>
@@ -115,9 +113,7 @@ export default function ClientView({ activeProject, rooms, materials, tasks }) {
                 {rooms.map(room => (
                   <tr key={room.id}>
                     <td><strong>{room.name}</strong></td>
-                    <td>{room.length} ft</td>
-                    <td>{room.width} ft</td>
-                    <td>{room.height} ft</td>
+                    <td>{parseFloat(room.length)} × {parseFloat(room.width)} × {parseFloat(room.height)} ft</td>
                     <td><strong>{(parseFloat(room.length) * parseFloat(room.width)).toFixed(0)} sq ft</strong></td>
                     <td><span className={`${styles.badge} ${styles[room.status]}`}>{room.status}</span></td>
                   </tr>

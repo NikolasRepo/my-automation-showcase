@@ -150,17 +150,15 @@ export default function Projects({ projects, activeProjectId, setActiveProjectId
                     <span className={styles.summaryValue}>{summary.room_count || 0}</span>
                     <span className={styles.summaryLabel}>Rooms</span>
                   </div>
-                  <div className={styles.summaryDivider} />
                   <div className={styles.summaryItem}>
                     <span className={styles.summaryValue}>{parseFloat(summary.total_area || 0).toFixed(0)} sq ft</span>
                     <span className={styles.summaryLabel}>Total area</span>
                   </div>
-                  <div className={styles.summaryDivider} />
                   <div className={styles.summaryItem}>
                     <span className={styles.summaryValue}>{summary.material_count || 0}</span>
                     <span className={styles.summaryLabel}>Materials</span>
+                    <span className={styles.summaryCost}>${parseFloat(summary.material_cost || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                   </div>
-                  <div className={styles.summaryDivider} />
                   <div className={styles.summaryItem}>
                     <span className={styles.summaryValue}>
                       {summary.task_count > 0

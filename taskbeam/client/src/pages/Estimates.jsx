@@ -53,18 +53,18 @@ export default function Estimates({ rooms, materials }) {
   }
 
   const roomEstimates = rooms.map(room => {
-   const roomMaterials = materials.filter(m => m.room_id === room.id)
-   const materialTotal = roomMaterials.reduce((sum, m) => sum + getLineTotal(m, rooms), 0)
-   const laborTotal = parseFloat(laborRates[room.id] || 0)
-   const subtotal = materialTotal + laborTotal
-   return {
-     room,
-     roomMaterials,
-     materialTotal: parseFloat(materialTotal.toFixed(2)),
-     laborTotal: parseFloat(laborTotal.toFixed(2)),
-     subtotal: parseFloat(subtotal.toFixed(2)),
-   }
- })
+    const roomMaterials = materials.filter(m => m.room_id === room.id)
+    const materialTotal = roomMaterials.reduce((sum, m) => sum + getLineTotal(m, rooms), 0)
+    const laborTotal = parseFloat(laborRates[room.id] || 0)
+    const subtotal = materialTotal + laborTotal
+    return {
+      room,
+      roomMaterials,
+      materialTotal: parseFloat(materialTotal.toFixed(2)),
+      laborTotal: parseFloat(laborTotal.toFixed(2)),
+      subtotal: parseFloat(subtotal.toFixed(2)),
+    }
+  })
 
   const totalMaterials = roomEstimates.reduce((sum, r) => sum + r.materialTotal, 0)
   const totalLabor = roomEstimates.reduce((sum, r) => sum + r.laborTotal, 0)
@@ -120,14 +120,83 @@ export default function Estimates({ rooms, materials }) {
           ))}
         </div>
       </div>
-
+        {materials.length > 0 && (
+          <div className={styles.roomCard}>
+            <div className={styles.roomHeader}>
+              <div>
+                <span className={styles.roomName}>Materials summary</span>
+                <span className={styles.roomDims}>Consolidated across all rooms</span>
+              </div>
+            </div>
+            <table className={styles.table}>
+              <colgroup>
+                <col />
+                <col />
+                <col />
+                <col />
+                <col />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Application</th>
+                  <th>Rooms</th>
+                  <th>Total quantity</th>
+                  <th>Total cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.values(
+                  materials.reduce((groups, mat) => {
+                    const key = `${mat.name}__${mat.application}`
+                    const qty = getQuantity(mat, rooms)
+                    const total = getLineTotal(mat, rooms)
+                    const room = rooms.find(r => r.id === mat.room_id)
+                    const appT = APPLICATION_TYPES.find(a => a.value === mat.application)
+                    if (!groups[key]) {
+                      groups[key] = {
+                        name: mat.name,
+                        application: mat.application,
+                        appLabel: appT ? appT.label : '—',
+                        unit: appT ? appT.unit : '',
+                        roomNames: [],
+                        totalQty: 0,
+                        totalCost: 0,
+                      }
+                    }
+                    groups[key].totalQty += qty
+                    groups[key].totalCost += total
+                    if (room && !groups[key].roomNames.includes(room.name)) {
+                      groups[key].roomNames.push(room.name)
+                    }
+                    return groups
+                  }, {})
+                ).map((group, i) => (
+                  <tr key={i}>
+                    <td><strong>{group.name}</strong></td>
+                    <td>{group.appLabel}</td>
+                    <td>{group.roomNames.join(', ') || '—'}</td>
+                    <td>{group.totalQty.toFixed(2)} {group.unit}</td>
+                    <td><strong>${group.totalCost.toLocaleString()}</strong></td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan="4" className={styles.totalLabel}>Total materials cost</td>
+                  <td className={styles.totalValue}>${totalMaterials.toLocaleString()}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
       {roomEstimates.map(({ room, roomMaterials, materialTotal, laborTotal, subtotal }) => (
         <div key={room.id} className={styles.roomCard}>
           <div className={styles.roomHeader}>
             <div>
               <span className={styles.roomName}>{room.name}</span>
               <span className={styles.roomDims}>
-                {room.length} × {room.width} ft · {(parseFloat(room.length) * parseFloat(room.width)).toFixed(0)} sq ft
+                {parseFloat(room.length)} × {parseFloat(room.width)} ft · {(parseFloat(room.length) * parseFloat(room.width)).toFixed(0)} sq ft
               </span>
             </div>
             <span className={styles.roomSubtotal}>${subtotal.toLocaleString()}</span>
@@ -135,6 +204,13 @@ export default function Estimates({ rooms, materials }) {
 
           {roomMaterials.length > 0 && (
             <table className={styles.table}>
+              <colgroup>
+                <col />
+                <col />
+                <col />
+                <col />
+                <col />
+              </colgroup>
               <thead>
                 <tr>
                   <th>Material</th>
@@ -151,10 +227,10 @@ export default function Estimates({ rooms, materials }) {
                   const total = getLineTotal(mat, rooms)
                   return (
                     <tr key={mat.id}>
-                      <td>{mat.name}</td>
+                      <td><strong>{mat.name}</strong></td>
                       <td>{appT ? appT.label : '—'}</td>
                       <td>{qty} {appT ? appT.unit : ''}</td>
-                      <td>${parseFloat(mat.unitCost || 0).toFixed(2)}</td>
+                      <td>${parseFloat(mat.unit_cost || 0).toFixed(2)}</td>
                       <td><strong>${total.toLocaleString()}</strong></td>
                     </tr>
                   )
