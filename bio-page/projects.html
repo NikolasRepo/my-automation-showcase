@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projects — Robert</title>
+  <meta name="description" content="Automation and manufacturing engineering projects by Robert.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="projects">
+  <div data-include="partials/header.html"></div>
+
+  <main>
+    <section class="container page-header">
+      <h1>Projects</h1>
+    </section>
+
+    <section class="container project-grid">
+      <article class="project-card">
+        <h2>Taskbeam</h2>
+        <p>
+          Construction project tracking app with role-based contractor/client access. React + Vite
+          frontend, Node/Express + PostgreSQL backend, AWS Cognito auth, deployed on ECS Fargate
+          behind an ALB.
+        </p>
+        <div class="project-links">
+          <a href="https://taskbeam.pipeline-projects.com" target="_blank" rel="noopener">Live site</a>
+          <a href="https://github.com/NikolasRepo/my-automation-showcase" target="_blank" rel="noopener">Showcase repo</a>
+        </div>
+      </article>
+
+      <article class="project-card">
+        <h2>Excel Combiner</h2>
+        <p>
+          Dockerized Flask web app that merges Excel files with differing layouts into one
+          normalized file through a guided column-mapping step.
+        </p>
+      </article>
+
+      <article class="project-card">
+        <h2>Alarm Analysis Pipeline</h2>
+        <p>
+          Pipeline that turns raw Ignition SCADA CSV exports into shift-coded Excel reports for
+          production line alarm analysis.
+        </p>
+      </article>
+
+      <article class="project-card">
+        <h2>This Site</h2>
+        <p>
+          The page you're looking at — a from-scratch HTML/CSS/JS build, deployed via GitHub
+          Actions to AWS S3 + CloudFront.
+        </p>
+        <div class="project-links">
+          <a href="https://github.com/NikolasRepo/my-automation-showcase" target="_blank" rel="noopener">Source</a>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div data-include="partials/footer.html"></div>
+  <script src="js/include.js" defer></script>
+  <script src="js/main.js" defer></script>
+</body>
+</html>
