@@ -1,9 +1,10 @@
 const express = require('express')
 const router = express.Router()
 const pool = require('../db/pool')
+const { requireAuth, requireContractor } = require('../middleware/auth')
 
 // Get all tasks for a project
-router.get('/project/:projectId', async (req, res) => {
+router.get('/project/:projectId', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT * FROM tasks WHERE project_id = $1 ORDER BY created_at ASC',
@@ -17,7 +18,7 @@ router.get('/project/:projectId', async (req, res) => {
 })
 
 // Create task
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, requireContractor, async (req, res) => {
   const { project_id, room_id, title, priority, status, due_date, notes, client_visible } = req.body
   if (!project_id || !title) {
     return res.status(400).json({ error: 'project_id and title are required' })
@@ -36,7 +37,7 @@ router.post('/', async (req, res) => {
 })
 
 // Update task
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireAuth, requireContractor, async (req, res) => {
   const { room_id, title, priority, status, due_date, notes, client_visible } = req.body
   try {
     const result = await pool.query(
@@ -55,7 +56,7 @@ router.put('/:id', async (req, res) => {
 })
 
 // Delete task
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAuth, requireContractor, async (req, res) => {
   try {
     await pool.query('DELETE FROM tasks WHERE id = $1', [req.params.id])
     res.json({ success: true })

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import Layout from './components/layout/Layout'
 import Projects from './pages/Projects'
@@ -7,21 +7,50 @@ import Materials from './pages/Materials'
 import Estimates from './pages/Estimates'
 import Tasks from './pages/Tasks'
 import ClientView from './pages/ClientView'
+import Files from './pages/Files'
+import FloorPlan from './pages/FloorPlan'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Confirm from './pages/Confirm'
 import { api } from './services/api'
+import { AuthProvider, useAuth } from './context/AuthContext'
 
-function App() {
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth()
+  if (loading) return <div style={{ padding: '24px' }}>Loading...</div>
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  return children
+}
+
+function AppRoutes() {
   const [projects, setProjects] = useState([])
-  const [activeProjectId, setActiveProjectId] = useState(null)
+  const [activeProjectId, setActiveProjectIdState] = useState(null)
   const [rooms, setRooms] = useState([])
   const [materials, setMaterials] = useState([])
   const [tasks, setTasks] = useState([])
+  const [laborCosts, setLaborCosts] = useState({})
+  const [files, setFiles] = useState([])
   const [summaries, setSummaries] = useState({})
   const [loading, setLoading] = useState(true)
+  const { isAuthenticated, logout } = useAuth()
 
   const activeProject = projects.find(p => p.id === activeProjectId) || null
   const unitSystem = activeProject?.unit_system || 'imperial'
 
+  function setActiveProjectId(id) {
+    setActiveProjectIdState(id)
+    if (id) {
+      localStorage.setItem('taskbeam_active_project', id)
+    } else {
+      localStorage.removeItem('taskbeam_active_project')
+    }
+  }
+
   useEffect(() => {
+    if (!isAuthenticated) {
+      setLoading(false)
+      return
+    }
     async function init() {
       try {
         const [data, summaryData] = await Promise.all([
@@ -32,7 +61,11 @@ function App() {
         const summaryMap = {}
         summaryData.forEach(s => { summaryMap[s.id] = s })
         setSummaries(summaryMap)
-        if (data.length > 0) setActiveProjectId(data[0].id)
+        if (data.length > 0) {
+          const savedId = localStorage.getItem('taskbeam_active_project')
+          const savedProject = savedId && data.find(p => p.id === savedId)
+          setActiveProjectIdState(savedProject ? savedId : data[0].id)
+        }
       } catch (err) {
         console.error('Failed to load projects:', err)
       } finally {
@@ -40,25 +73,33 @@ function App() {
       }
     }
     init()
-  }, [])
+  }, [isAuthenticated])
 
   useEffect(() => {
     if (!activeProjectId) {
       setRooms([])
       setMaterials([])
       setTasks([])
+      setLaborCosts({})
+      setFiles([])
       return
     }
     async function loadProjectData() {
       try {
-        const [r, m, t] = await Promise.all([
+        const [r, m, t, l, f] = await Promise.all([
           api.getRooms(activeProjectId),
           api.getMaterials(activeProjectId),
           api.getTasks(activeProjectId),
+          api.getLaborCosts(activeProjectId),
+          api.getFiles(activeProjectId),
         ])
         setRooms(r)
         setMaterials(m)
         setTasks(t)
+        const laborMap = {}
+        l.forEach(lc => { laborMap[lc.room_id] = lc.amount })
+        setLaborCosts(laborMap)
+        setFiles(f)
       } catch (err) {
         console.error('Failed to load project data:', err)
       }
@@ -161,72 +202,118 @@ function App() {
     refreshSummaries()
   }
 
-  if (loading) {
+  async function handleSaveLaborCost(roomId, amount) {
+    try {
+      await api.saveLaborCost({
+        project_id: activeProjectId,
+        room_id: roomId,
+        amount: parseFloat(amount) || 0,
+      })
+      setLaborCosts(prev => ({ ...prev, [roomId]: amount }))
+    } catch (err) {
+      console.error('Failed to save labor cost:', err)
+    }
+  }
+
+  if (loading && isAuthenticated) {
     return <div style={{ padding: '24px' }}>Loading...</div>
   }
 
   return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/confirm" element={<Confirm />} />
+      <Route path="*" element={
+        <ProtectedRoute>
+          <Layout activeProject={activeProject} onLogout={logout}>
+            <Routes>
+              <Route path="/" element={
+                <Projects
+                  projects={projects}
+                  activeProjectId={activeProjectId}
+                  setActiveProjectId={setActiveProjectId}
+                  onCreateProject={handleCreateProject}
+                  onUpdateProject={handleUpdateProject}
+                  onDeleteProject={handleDeleteProject}
+                  summaries={summaries}
+                />}
+              />
+              <Route path="/rooms" element={
+                <Rooms
+                  rooms={rooms}
+                  onCreateRoom={handleCreateRoom}
+                  onUpdateRoom={handleUpdateRoom}
+                  onDeleteRoom={handleDeleteRoom}
+                  unitSystem={unitSystem}
+                />}
+              />
+              <Route path="/floorplan" element={
+                <FloorPlan
+                  rooms={rooms}
+                  onUpdateRoom={handleUpdateRoom}
+                />}
+              />
+              <Route path="/materials" element={
+                <Materials
+                  rooms={rooms}
+                  materials={materials}
+                  onCreateMaterial={handleCreateMaterial}
+                  onUpdateMaterial={handleUpdateMaterial}
+                  onDeleteMaterial={handleDeleteMaterial}
+                  unitSystem={unitSystem}
+                />}
+              />
+              <Route path="/estimates" element={
+                <Estimates
+                  rooms={rooms}
+                  materials={materials}
+                  activeProject={activeProject}
+                  unitSystem={unitSystem}
+                  laborCosts={laborCosts}
+                  onSaveLaborCost={handleSaveLaborCost}
+                />}
+              />
+              <Route path="/tasks" element={
+                <Tasks
+                  rooms={rooms}
+                  tasks={tasks}
+                  onCreateTask={handleCreateTask}
+                  onUpdateTask={handleUpdateTask}
+                  onDeleteTask={handleDeleteTask}
+                />}
+              />
+              <Route path="/files" element={
+                <Files
+                  files={files}
+                  setFiles={setFiles}
+                  activeProjectId={activeProjectId}
+                />}
+              />
+              <Route path="/client" element={
+                <ClientView
+                  activeProject={activeProject}
+                  rooms={rooms}
+                  materials={materials}
+                  tasks={tasks}
+                  unitSystem={unitSystem}
+                  files={files}
+                />}
+              />
+            </Routes>
+          </Layout>
+        </ProtectedRoute>
+      } />
+    </Routes>
+  )
+}
+
+function App() {
+  return (
     <BrowserRouter>
-      <Layout activeProject={activeProject}>
-        <Routes>
-          <Route path="/" element={
-            <Projects
-              projects={projects}
-              activeProjectId={activeProjectId}
-              setActiveProjectId={setActiveProjectId}
-              onCreateProject={handleCreateProject}
-              onUpdateProject={handleUpdateProject}
-              onDeleteProject={handleDeleteProject}
-              summaries={summaries}
-            />}
-          />
-          <Route path="/rooms" element={
-            <Rooms
-              rooms={rooms}
-              onCreateRoom={handleCreateRoom}
-              onUpdateRoom={handleUpdateRoom}
-              onDeleteRoom={handleDeleteRoom}
-              unitSystem={unitSystem}
-            />}
-          />
-          <Route path="/materials" element={
-            <Materials
-              rooms={rooms}
-              materials={materials}
-              onCreateMaterial={handleCreateMaterial}
-              onUpdateMaterial={handleUpdateMaterial}
-              onDeleteMaterial={handleDeleteMaterial}
-              unitSystem={unitSystem}
-            />}
-          />
-          <Route path="/estimates" element={
-            <Estimates
-              rooms={rooms}
-              materials={materials}
-              activeProject={activeProject}
-              unitSystem={unitSystem}
-            />}
-          />
-          <Route path="/tasks" element={
-            <Tasks
-              rooms={rooms}
-              tasks={tasks}
-              onCreateTask={handleCreateTask}
-              onUpdateTask={handleUpdateTask}
-              onDeleteTask={handleDeleteTask}
-            />}
-          />
-          <Route path="/client" element={
-            <ClientView
-              activeProject={activeProject}
-              rooms={rooms}
-              materials={materials}
-              tasks={tasks}
-              unitSystem={unitSystem}
-            />}
-          />
-        </Routes>
-      </Layout>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </BrowserRouter>
   )
 }

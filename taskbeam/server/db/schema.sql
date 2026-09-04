@@ -12,16 +12,18 @@ CREATE TABLE IF NOT EXISTS projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
   client_name VARCHAR(255),
-  owner_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  owner_id UUID,
+  budget DECIMAL(10,2) DEFAULT NULL,
+  unit_system VARCHAR(10) DEFAULT 'imperial',
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Project members (links clients to projects as read-only viewers)
+-- Project members
 CREATE TABLE IF NOT EXISTS project_members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID,
   role VARCHAR(50) DEFAULT 'client',
   created_at TIMESTAMP DEFAULT NOW(),
   UNIQUE(project_id, user_id)
@@ -36,6 +38,8 @@ CREATE TABLE IF NOT EXISTS rooms (
   width DECIMAL(10,2),
   height DECIMAL(10,2),
   status VARCHAR(50) DEFAULT 'planned',
+  x DECIMAL(10,2) DEFAULT 0,
+  y DECIMAL(10,2) DEFAULT 0,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -67,6 +71,30 @@ CREATE TABLE IF NOT EXISTS tasks (
   client_visible BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Labor costs
+CREATE TABLE IF NOT EXISTS labor_costs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  room_id UUID REFERENCES rooms(id) ON DELETE CASCADE,
+  amount DECIMAL(10,2) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(project_id, room_id)
+);
+
+-- Files
+CREATE TABLE IF NOT EXISTS files (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  owner_id UUID,
+  name VARCHAR(255) NOT NULL,
+  s3_key VARCHAR(500) NOT NULL,
+  size INTEGER,
+  mime_type VARCHAR(100),
+  client_visible BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Auto-update updated_at on changes

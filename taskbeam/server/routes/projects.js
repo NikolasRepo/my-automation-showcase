@@ -1,12 +1,14 @@
 const express = require('express')
 const router = express.Router()
 const pool = require('../db/pool')
+const { requireAuth, requireContractor } = require('../middleware/auth')
 
-// Get all projects
-router.get('/', async (req, res) => {
+// Get all projects - only return projects owned by the logged-in user
+router.get('/', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM projects ORDER BY created_at DESC'
+      'SELECT * FROM projects WHERE owner_id = $1 ORDER BY created_at DESC',
+      [req.user.id]
     )
     res.json(result.rows)
   } catch (err) {
@@ -15,8 +17,8 @@ router.get('/', async (req, res) => {
   }
 })
 
-// Get summary stats for all projects
-router.get('/summary/all', async (req, res) => {
+// Get summary stats - only for projects owned by the logged-in user
+router.get('/summary/all', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -40,8 +42,9 @@ router.get('/summary/all', async (req, res) => {
       LEFT JOIN rooms r ON r.project_id = p.id
       LEFT JOIN materials m ON m.project_id = p.id AND m.room_id = r.id
       LEFT JOIN tasks t ON t.project_id = p.id
+      WHERE p.owner_id = $1
       GROUP BY p.id
-    `)
+    `, [req.user.id])
     res.json(result.rows)
   } catch (err) {
     console.error(err)
@@ -49,12 +52,12 @@ router.get('/summary/all', async (req, res) => {
   }
 })
 
-// Get single project
-router.get('/:id', async (req, res) => {
+// Get single project - only if owned by logged-in user
+router.get('/:id', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM projects WHERE id = $1',
-      [req.params.id]
+      'SELECT * FROM projects WHERE id = $1 AND owner_id = $2',
+      [req.params.id, req.user.id]
     )
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Project not found' })
@@ -66,14 +69,14 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// Create project
-router.post('/', async (req, res) => {
+// Create project - set owner_id to logged-in user
+router.post('/', requireAuth, requireContractor, async (req, res) => {
   const { name, client_name, budget, unit_system } = req.body
   if (!name) return res.status(400).json({ error: 'Project name is required' })
   try {
     const result = await pool.query(
-      'INSERT INTO projects (name, client_name, budget, unit_system) VALUES ($1, $2, $3, $4) RETURNING *',
-      [name, client_name || null, budget || null, unit_system || 'imperial']
+      'INSERT INTO projects (name, client_name, budget, unit_system, owner_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [name, client_name || null, budget || null, unit_system || 'imperial', req.user.id]
     )
     res.status(201).json(result.rows[0])
   } catch (err) {
@@ -82,13 +85,13 @@ router.post('/', async (req, res) => {
   }
 })
 
-//Update project
-router.put('/:id', async (req, res) => {
+// Update project - only if owned by logged-in user
+router.put('/:id', requireAuth, requireContractor, async (req, res) => {
   const { name, client_name, budget, unit_system } = req.body
   try {
     const result = await pool.query(
-      'UPDATE projects SET name = $1, client_name = $2, budget = $3, unit_system = $4 WHERE id = $5 RETURNING *',
-      [name, client_name || null, budget || null, unit_system || 'imperial', req.params.id]
+      'UPDATE projects SET name = $1, client_name = $2, budget = $3, unit_system = $4 WHERE id = $5 AND owner_id = $6 RETURNING *',
+      [name, client_name || null, budget || null, unit_system || 'imperial', req.params.id, req.user.id]
     )
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Project not found' })
@@ -100,10 +103,13 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// Delete project
-router.delete('/:id', async (req, res) => {
+// Delete project - only if owned by logged-in user
+router.delete('/:id', requireAuth, requireContractor, async (req, res) => {
   try {
-    await pool.query('DELETE FROM projects WHERE id = $1', [req.params.id])
+    await pool.query(
+      'DELETE FROM projects WHERE id = $1 AND owner_id = $2',
+      [req.params.id, req.user.id]
+    )
     res.json({ success: true })
   } catch (err) {
     console.error(err)

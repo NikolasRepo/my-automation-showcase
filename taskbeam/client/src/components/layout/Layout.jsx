@@ -1,7 +1,10 @@
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import styles from './Layout.module.css'
 
-export default function Layout({ children, activeProject }) {
+export default function Layout({ children, activeProject, onLogout }) {
+  const { user } = useAuth()
+
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
@@ -14,8 +17,8 @@ export default function Layout({ children, activeProject }) {
           <div className={styles.activeProject}>
             <span className={styles.activeProjectLabel}>Active project</span>
             <span className={styles.activeProjectName}>{activeProject.name}</span>
-            {activeProject.clientName && (
-              <span className={styles.activeProjectClient}>{activeProject.clientName}</span>
+            {activeProject.client_name && (
+              <span className={styles.activeProjectClient}>{activeProject.client_name}</span>
             )}
           </div>
         )}
@@ -32,6 +35,9 @@ export default function Layout({ children, activeProject }) {
               <NavLink to="/rooms" className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}>
                 Rooms & layout
               </NavLink>
+              <NavLink to="/floorplan" className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}>
+                Floor plan
+              </NavLink>
               <NavLink to="/materials" className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}>
                 Materials
               </NavLink>
@@ -41,12 +47,23 @@ export default function Layout({ children, activeProject }) {
               <NavLink to="/tasks" className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}>
                 Tasks
               </NavLink>
+              <NavLink to="/files" className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}>
+                Files
+              </NavLink>
               <NavLink to="/client" className={styles.navItem}>
                 Client view ↗
               </NavLink>
             </>
           )}
         </nav>
+
+        <div className={styles.userSection}>
+          <span className={styles.userEmail}>{user?.email}</span>
+          <span className={styles.userRole}>{user?.role}</span>
+          <button className={styles.logoutBtn} onClick={onLogout}>
+            Sign out
+          </button>
+        </div>
       </aside>
       <div className={styles.main}>
         {children}

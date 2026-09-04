@@ -1,5 +1,5 @@
 import styles from './ClientView.module.css'
-import { convertLength, convertArea, lengthUnit, areaUnit } from '../utils/units'
+import { api } from '../services/api'
 
 const APPLICATION_TYPES = [
   { value: 'floor', label: 'Flooring', unit: 'sq ft', dimensionKey: 'floorArea' },
@@ -44,7 +44,7 @@ function getLineTotal(material, rooms) {
   return parseFloat((qty * cost).toFixed(2))
 }
 
-export default function ClientView({ activeProject, rooms, materials, tasks, unitSystem }) {
+export default function ClientView({ activeProject, rooms, materials, tasks, unitSystem, files }) {
   if (!activeProject) {
     return (
       <div className={styles.empty}>
@@ -62,6 +62,16 @@ export default function ClientView({ activeProject, rooms, materials, tasks, uni
   )
 
   const clientTasks = tasks.filter(t => t.client_visible)
+  const clientFiles = files ? files.filter(f => f.client_visible) : []
+
+  async function handleDownload(file) {
+    try {
+      const { downloadUrl } = await api.getDownloadUrl(file.id)
+      window.open(downloadUrl, '_blank')
+    } catch (err) {
+      console.error('Download failed:', err)
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -85,7 +95,7 @@ export default function ClientView({ activeProject, rooms, materials, tasks, uni
         </div>
         <div className={styles.summaryCard}>
           <span className={styles.summaryLabel}>Total area</span>
-          <span className={styles.summaryValue}>{totalArea.toFixed(0)} {areaUnit(unitSystem)}</span>
+          <span className={styles.summaryValue}>{totalArea.toFixed(0)} sq ft</span>
         </div>
         <div className={styles.summaryCard}>
           <span className={styles.summaryLabel}>Material line items</span>
@@ -105,7 +115,7 @@ export default function ClientView({ activeProject, rooms, materials, tasks, uni
               <thead>
                 <tr>
                   <th>Room</th>
-                  <th>Dimension</th>
+                  <th>Dimensions</th>
                   <th>Area</th>
                   <th>Status</th>
                 </tr>
@@ -114,8 +124,8 @@ export default function ClientView({ activeProject, rooms, materials, tasks, uni
                 {rooms.map(room => (
                   <tr key={room.id}>
                     <td><strong>{room.name}</strong></td>
-                    <td>{convertLength(room.length, unitSystem)} × {convertLength(room.width, unitSystem)} × {convertLength(room.height, unitSystem)} {lengthUnit(unitSystem)}</td>
-                    <td><strong>{convertArea(parseFloat(room.length) * parseFloat(room.width), unitSystem).toFixed(0)} {areaUnit(unitSystem)}</strong></td>
+                    <td>{parseFloat(room.length)} × {parseFloat(room.width)} × {parseFloat(room.height)} ft</td>
+                    <td><strong>{(parseFloat(room.length) * parseFloat(room.width)).toFixed(0)} sq ft</strong></td>
                     <td><span className={`${styles.badge} ${styles[room.status]}`}>{room.status}</span></td>
                   </tr>
                 ))}
@@ -202,7 +212,44 @@ export default function ClientView({ activeProject, rooms, materials, tasks, uni
         </div>
       )}
 
-      {rooms.length === 0 && materials.length === 0 && clientTasks.length === 0 && (
+      {clientFiles.length > 0 && (
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Project files</h2>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>File</th>
+                  <th>Type</th>
+                  <th>Size</th>
+                  <th>Date</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {clientFiles.map(file => (
+                  <tr key={file.id}>
+                    <td><strong>{file.name}</strong></td>
+                    <td>{file.mime_type}</td>
+                    <td>{file.size ? `${(file.size / 1024).toFixed(1)} KB` : '—'}</td>
+                    <td>{new Date(file.created_at).toLocaleDateString()}</td>
+                    <td>
+                      <button
+                        className={styles.downloadBtn}
+                        onClick={() => handleDownload(file)}
+                      >
+                        Download
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {rooms.length === 0 && materials.length === 0 && clientTasks.length === 0 && clientFiles.length === 0 && (
         <div className={styles.emptyState}>
           <p>No project data available yet.</p>
         </div>

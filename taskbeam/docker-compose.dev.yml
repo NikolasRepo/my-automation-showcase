@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./client/src:/app/src
+      - client_node_modules:/app/node_modules
     ports:
       - "5173:5173"
     environment:
@@ -18,7 +19,7 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./server:/app
-      - /app/node_modules
+      - server_node_modules:/app/node_modules
     ports:
       - "3001:3001"
     environment:
@@ -28,6 +29,10 @@ services:
       - DB_NAME=taskbeam
       - DB_USER=taskbeam
       - DB_PASSWORD=taskbeam_dev
+      - COGNITO_USER_POOL_ID=us-east-1_S8ZsLoG1O
+      - COGNITO_CONTRACTOR_CLIENT_ID=4n0rkllpa222nt25o57ku0udt4
+      - COGNITO_CLIENT_CLIENT_ID=6n94nte1lq54e36hshuf0c1aec
+      - AWS_REGION=us-east-1
     depends_on:
       - db
 
@@ -55,3 +60,5 @@ services:
 
 volumes:
   taskbeam_db_data:
+  server_node_modules:
+  client_node_modules:

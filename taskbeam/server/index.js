@@ -6,6 +6,9 @@ const projectsRouter = require('./routes/projects')
 const roomsRouter = require('./routes/rooms')
 const materialsRouter = require('./routes/materials')
 const tasksRouter = require('./routes/tasks')
+const authRouter = require('./routes/auth')
+const laborRouter = require('./routes/labor')
+const filesRouter = require('./routes/files')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -17,10 +20,13 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'TaskBeam API is running' })
 })
 
+app.use('/auth', authRouter)
 app.use('/projects', projectsRouter)
 app.use('/rooms', roomsRouter)
 app.use('/materials', materialsRouter)
 app.use('/tasks', tasksRouter)
+app.use('/labor', laborRouter)
+app.use('/files', filesRouter)
 
 app.listen(PORT, () => {
   console.log(`TaskBeam API running on port ${PORT}`)

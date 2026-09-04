@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import styles from './Estimates.module.css'
+import { convertLength, convertArea, lengthUnit, areaUnit } from '../utils/units'
 
 const APPLICATION_TYPES = [
   { value: 'floor', label: 'Flooring', unit: 'sq ft', dimensionKey: 'floorArea' },
@@ -44,18 +45,13 @@ function getLineTotal(material, rooms) {
   return parseFloat((qty * cost).toFixed(2))
 }
 
-export default function Estimates({ rooms, materials, activeProject }) {
-  const [laborRates, setLaborRates] = useState({})
+export default function Estimates({ rooms, materials, activeProject, unitSystem, laborCosts, onSaveLaborCost }) {
   const [contingency, setContingency] = useState(10)
-
-  function handleLaborChange(roomId, value) {
-    setLaborRates({ ...laborRates, [roomId]: value })
-  }
 
   const roomEstimates = rooms.map(room => {
     const roomMaterials = materials.filter(m => m.room_id === room.id)
     const materialTotal = roomMaterials.reduce((sum, m) => sum + getLineTotal(m, rooms), 0)
-    const laborTotal = parseFloat(laborRates[room.id] || 0)
+    const laborTotal = parseFloat(laborCosts[room.id] || 0)
     const subtotal = materialTotal + laborTotal
     return {
       room,
@@ -222,7 +218,14 @@ export default function Estimates({ rooms, materials, activeProject }) {
                   <td><strong>{group.name}</strong></td>
                   <td>{group.appLabel}</td>
                   <td>{group.roomNames.join(', ') || '—'}</td>
-                  <td>{group.totalQty.toFixed(2)} {group.unit}</td>
+                  <td>
+                    {group.unit === 'ft'
+                      ? `${convertLength(group.totalQty, unitSystem).toFixed(2)} ${lengthUnit(unitSystem)}`
+                      : group.unit === 'units'
+                      ? `${group.totalQty.toFixed(2)} units`
+                      : `${convertArea(group.totalQty, unitSystem).toFixed(2)} ${areaUnit(unitSystem)}`
+                    }
+                  </td>
                   <td><strong>${group.totalCost.toLocaleString()}</strong></td>
                 </tr>
               ))}
@@ -243,7 +246,7 @@ export default function Estimates({ rooms, materials, activeProject }) {
             <div>
               <span className={styles.roomName}>{room.name}</span>
               <span className={styles.roomDims}>
-                {parseFloat(room.length)} × {parseFloat(room.width)} ft · {(parseFloat(room.length) * parseFloat(room.width)).toFixed(0)} sq ft
+                {convertLength(room.length, unitSystem)} × {convertLength(room.width, unitSystem)} {lengthUnit(unitSystem)} · {convertArea(parseFloat(room.length) * parseFloat(room.width), unitSystem).toFixed(0)} {areaUnit(unitSystem)}
               </span>
             </div>
             <span className={styles.roomSubtotal}>${subtotal.toLocaleString()}</span>
@@ -276,7 +279,14 @@ export default function Estimates({ rooms, materials, activeProject }) {
                     <tr key={mat.id}>
                       <td><strong>{mat.name}</strong></td>
                       <td>{appT ? appT.label : '—'}</td>
-                      <td>{qty} {appT ? appT.unit : ''}</td>
+                      <td>
+                        {appT?.value === 'baseboard'
+                          ? `${convertLength(qty, unitSystem)} ${lengthUnit(unitSystem)}`
+                          : appT?.value === 'custom'
+                          ? `${qty} units`
+                          : `${convertArea(qty, unitSystem)} ${areaUnit(unitSystem)}`
+                        }
+                      </td>
                       <td>${parseFloat(mat.unit_cost || 0).toFixed(2)}</td>
                       <td><strong>${total.toLocaleString()}</strong></td>
                     </tr>
@@ -296,10 +306,10 @@ export default function Estimates({ rooms, materials, activeProject }) {
               className={styles.laborInput}
               type="number"
               placeholder="0"
-              value={laborRates[room.id] || ''}
-              onChange={e => handleLaborChange(room.id, e.target.value)}
+              defaultValue={laborCosts[room.id] || ''}
+              onBlur={e => onSaveLaborCost(room.id, e.target.value)}
             />
-            <span className={styles.laborNote}>entered manually per room</span>
+            <span className={styles.laborNote}>saved automatically on exit</span>
           </div>
 
           <div className={styles.roomTotals}>

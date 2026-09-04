@@ -29,7 +29,7 @@ PRODUCTION_LINES = [
     {
         "name": "Line A",
         "description": None,
-        "supervisor_email": None,
+        "supervisor_email": "lgndunt@gmail.com",
         "stations": [
             {
                 "name": "Station 1",
@@ -127,7 +127,7 @@ ADMINS = [
         "full_name": "System Admin",
         "username": "admin",
         "email": None,
-        "password": "StrongPassword123",
+        "password": "Demo2026!",
     },
 ]
 
